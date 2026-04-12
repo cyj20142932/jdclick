@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/menu_container"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/floating_background"
+    android:padding="6dp">
+
+    <!-- 状态指示条 -->
+    <View
+        android:id="@+id/status_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@drawable/status_indicator_green" />
+
+    <!-- 时钟状态区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="6dp"
+        android:paddingVertical="4dp">
+
+        <TextView
+            android:id="@+id/text_clock_status"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="时钟: 同步中..."
+            android:textColor="#CCCCCC"
+            android:textSize="10sp" />
+
+        <TextView
+            android:id="@+id/text_ntp_offset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:text="--ms"
+            android:textColor="#AAAAAA"
+            android:textSize="9sp"
+            android:fontFamily="monospace" />
+
+    </LinearLayout>
+
+    <!-- 分割线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#444444"
+        android:layout_marginVertical="3dp" />
+
+    <!-- 按钮区域 - 2x2 网格布局 -->
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:rowCount="2"
+        android:alignmentMode="alignBounds"
+        android:useDefaultMargins="true">
+
+        <!-- 时钟按钮 -->
+        <LinearLayout
+            android:layout_width="56dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="3dp">
+
+            <FrameLayout
+                android:layout_width="36dp"
+                android:layout_height="36dp">
+
+                <ImageButton
+                    android:id="@+id/btn_clock"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_menu_recent_history"
+                    android:background="@drawable/button_gradient_bg"
+                    android:scaleType="centerInside"
+                    android:padding="5dp"
+                    android:contentDescription="时钟" />
+
+                <View
+                    android:id="@+id/indicator_clock"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_gravity="top|end"
+                    android:background="@drawable/status_dot_green"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="时钟"
+                android:textColor="#CCCCCC"
+                android:textSize="9sp"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
+
+        <!-- 循环按钮 -->
+        <LinearLayout
+            android:layout_width="56dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="3dp">
+
+            <FrameLayout
+                android:layout_width="36dp"
+                android:layout_height="36dp">
+
+                <ImageButton
+                    android:id="@+id/btn_lock"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_menu_manage"
+                    android:background="@drawable/button_gradient_bg"
+                    android:scaleType="centerInside"
+                    android:padding="5dp"
+                    android:contentDescription="循环" />
+
+                <View
+                    android:id="@+id/indicator_loop"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_gravity="top|end"
+                    android:background="@drawable/status_dot_green"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="循环"
+                android:textColor="#CCCCCC"
+                android:textSize="9sp"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
+
+        <!-- 礼物按钮 -->
+        <LinearLayout
+            android:layout_width="56dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="3dp">
+
+            <FrameLayout
+                android:layout_width="36dp"
+                android:layout_height="36dp">
+
+                <ImageButton
+                    android:id="@+id/btn_gift"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_menu_send"
+                    android:background="@drawable/button_gradient_bg"
+                    android:scaleType="centerInside"
+                    android:padding="5dp"
+                    android:contentDescription="礼物" />
+
+                <View
+                    android:id="@+id/indicator_gift"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_gravity="top|end"
+                    android:background="@drawable/status_dot_green"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="礼物"
+                android:textColor="#CCCCCC"
+                android:textSize="9sp"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
+
+        <!-- 定时按钮 -->
+        <LinearLayout
+            android:layout_width="56dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="3dp">
+
+            <FrameLayout
+                android:layout_width="36dp"
+                android:layout_height="36dp">
+
+                <ImageButton
+                    android:id="@+id/btn_play"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/ic_media_play"
+                    android:background="@drawable/button_gradient_bg"
+                    android:scaleType="centerInside"
+                    android:padding="5dp"
+                    android:contentDescription="定时" />
+
+                <View
+                    android:id="@+id/indicator_timed"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_gravity="top|end"
+                    android:background="@drawable/status_dot_green"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="定时"
+                android:textColor="#CCCCCC"
+                android:textSize="9sp"
+                android:layout_marginTop="2dp" />
+
+        </LinearLayout>
+
+    </GridLayout>
+
+    <!-- 分割线 -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#444444"
+        android:layout_marginVertical="4dp" />
+
+    <!-- 底部按钮区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <ImageButton
+            android:id="@+id/btn_stop"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@android:drawable/ic_media_pause"
+            android:background="@drawable/button_gradient_bg"
+            android:scaleType="centerInside"
+            android:padding="5dp"
+            android:contentDescription="停止" />
+
+        <ImageButton
+            android:id="@+id/btn_close"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="@drawable/button_gradient_bg"
+            android:scaleType="centerInside"
+            android:padding="5dp"
+            android:contentDescription="关闭" />
+
+        <ImageButton
+            android:id="@+id/btn_drag"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:src="@android:drawable/ic_menu_more"
+            android:background="@drawable/button_gradient_bg"
+            android:scaleType="centerInside"
+            android:padding="5dp"
+            android:contentDescription="拖拽" />
+
+    </LinearLayout>
+
+</LinearLayout>

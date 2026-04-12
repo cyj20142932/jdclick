@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 时钟+手指图标 - 蓝色系 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 时针 - 指向右下方 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,54L70,70L54,54Z"/>
+
+    <!-- 分针 - 指向右方 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,54L80,54L54,54Z"/>
+
+    <!-- 中心红点 -->
+    <path
+        android:fillColor="#FF5722"
+        android:pathData="M54,54m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0"/>
+
+    <!-- 手指图标 - 简化圆形+线条 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,35m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"/>
+
+    <!-- 手指线条 -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M43,43L65,65"/>
+
+</vector>

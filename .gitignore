@@ -14,9 +14,16 @@ bin/
 gen/
 out/
 
-# Gradle files
+# Gradle files (excluding wrapper which should be tracked)
 .gradle/
+.gradle-full/
+.gradle-temp/
 build/
+app/build/
+
+# Gradle wrapper and distributions
+gradle-8.2-bin.zip
+gradle-8.2-full.zip
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -80,9 +87,6 @@ lint/tmp/
 *.swo
 *~
 
-# CI/CD
-.travis.yml
-.jenkins/
-
-#crowdin
-crowdin.yml
+# Claude Code
+.claude/
+.superpowers/

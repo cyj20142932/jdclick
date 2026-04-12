@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">京东助手</string>
+    <string name="floating_service_label">悬浮时钟服务</string>
+    <string name="accessibility_service_label">无障碍点击服务</string>
+    <string name="notification_channel_floating">悬浮窗服务</string>
+    <string name="notification_channel_floating_desc">悬浮时钟后台运行通知</string>
+    <string name="notification_channel_click">点击服务</string>
+    <string name="notification_channel_click_desc">自动点击后台运行通知</string>
+    <string name="notification_channel_position">定位悬浮窗</string>
+    <string name="notification_channel_position_desc">位置定位后台运行通知</string>
+</resources>
