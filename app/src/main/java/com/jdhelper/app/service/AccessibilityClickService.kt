@@ -4,7 +4,8 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.graphics.Path
 import android.graphics.Point
-import android.util.Log
+import android.util.LogConsole
+import com.jdhelper.app.service.LogConsoleConsole
 import android.view.accessibility.AccessibilityNodeInfo
 
 class AccessibilityClickService : AccessibilityService() {
@@ -27,14 +28,14 @@ class AccessibilityClickService : AccessibilityService() {
         super.onServiceConnected()
         instance = this
         isServiceRunning = true
-        Log.d(TAG, "AccessibilityService connected")
+        LogConsole.d(TAG, "AccessibilityService connected")
     }
 
     override fun onAccessibilityEvent(event: android.view.accessibility.AccessibilityEvent?) {
     }
 
     override fun onInterrupt() {
-        Log.d(TAG, "Service interrupted")
+        LogConsole.d(TAG, "Service interrupted")
     }
 
     override fun onDestroy() {
@@ -54,10 +55,10 @@ class AccessibilityClickService : AccessibilityService() {
                 null,
                 null
             )
-            Log.d(TAG, "执行点击 ($x, $y): $dispatchResult")
+            LogConsole.d(TAG, "执行点击 ($x, $y): $dispatchResult")
             dispatchResult
         } catch (e: Exception) {
-            Log.e(TAG, "点击失败", e)
+            LogConsole.e(TAG, "点击失败", e)
             false
         }
     }
@@ -92,7 +93,7 @@ class AccessibilityClickService : AccessibilityService() {
                 performGlobalClick(result.x, result.y)
                 // 检查按钮文字是否包含"浏览"
                 val containsBrowse = result.buttonText.contains("浏览")
-                Log.d(TAG, "点击目标按钮: (${result.x}, ${result.y}), 包含浏览: $containsBrowse")
+                LogConsole.d(TAG, "点击目标按钮: (${result.x}, ${result.y}), 包含浏览: $containsBrowse")
                 containsBrowse
             } else {
                 null
@@ -203,10 +204,10 @@ class AccessibilityClickService : AccessibilityService() {
     fun performBack(): Boolean {
         return try {
             val result = performGlobalAction(GLOBAL_ACTION_BACK)
-            Log.d(TAG, "执行返回: $result")
+            LogConsole.d(TAG, "执行返回: $result")
             result
         } catch (e: Exception) {
-            Log.e(TAG, "返回失败", e)
+            LogConsole.e(TAG, "返回失败", e)
             false
         }
     }
@@ -244,10 +245,10 @@ class AccessibilityClickService : AccessibilityService() {
 
             val gesture = builder.build()
             val result = dispatchGesture(gesture, null, null)
-            Log.d(TAG, "执行上滑: $result, 屏幕: ${screenWidth}x${screenHeight}")
+            LogConsole.d(TAG, "执行上滑: $result, 屏幕: ${screenWidth}x${screenHeight}")
             result
         } catch (e: Exception) {
-            Log.e(TAG, "上滑失败", e)
+            LogConsole.e(TAG, "上滑失败", e)
             false
         }
     }
@@ -272,10 +273,10 @@ class AccessibilityClickService : AccessibilityService() {
             builder.addStroke(strokeDescription)
 
             val result = dispatchGesture(builder.build(), null, null)
-            Log.d(TAG, "执行下滑: $result")
+            LogConsole.d(TAG, "执行下滑: $result")
             result
         } catch (e: Exception) {
-            Log.e(TAG, "下滑失败", e)
+            LogConsole.e(TAG, "下滑失败", e)
             false
         }
     }

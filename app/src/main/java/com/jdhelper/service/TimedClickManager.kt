@@ -1,6 +1,7 @@
 package com.jdhelper.service
 
-import android.util.Log
+import android.util.LogConsole
+import com.jdhelper.app.service.LogConsoleConsole
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -59,7 +60,7 @@ class TimedClickManager @Inject constructor(
         isRunning = false
         job?.cancel()
         job = null
-        Log.d(TAG, "定时点击任务已停止")
+        LogConsole.d(TAG, "定时点击任务已停止")
     }
 
     /**
@@ -83,7 +84,7 @@ class TimedClickManager @Inject constructor(
 
         // 使用NTP时间计算延迟
         val delay = plannedClickTime - ntpTime
-        Log.d(TAG, "计划点击时间: $plannedClickTime, 当前NTP时间: $ntpTime, 等待: ${delay}ms")
+        LogConsole.d(TAG, "计划点击时间: $plannedClickTime, 当前NTP时间: $ntpTime, 等待: ${delay}ms")
 
         if (delay > 0) {
             job = scope.launch {
@@ -121,7 +122,7 @@ class TimedClickManager @Inject constructor(
         val actualDiff = actualClickTime - plannedClickTime
 
         AccessibilityClickService.getInstance()?.performGlobalClick(targetX, targetY)
-        Log.d(TAG, "执行点击: ($targetX, $targetY), 实际点击时间: $actualClickTime, 计划点击时间: $plannedClickTime, 偏差: ${actualDiff}ms")
+        LogConsole.d(TAG, "执行点击: ($targetX, $targetY), 实际点击时间: $actualClickTime, 计划点击时间: $plannedClickTime, 偏差: ${actualDiff}ms")
         clickCallback?.onClickComplete(actualClickTime, plannedClickTime, delayMillis, actualDiff)
         isRunning = false
     }

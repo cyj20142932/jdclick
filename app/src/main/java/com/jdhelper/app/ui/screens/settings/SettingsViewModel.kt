@@ -3,7 +3,8 @@ package com.jdhelper.ui.screens.settings
 import android.app.Application
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
-import android.util.Log
+import android.util.LogConsole
+import com.jdhelper.app.service.LogConsoleConsole
 import android.view.accessibility.AccessibilityManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -79,31 +80,31 @@ class SettingsViewModel @Inject constructor(
     fun setNtpServer(server: String) {
         ntpTimeService.setServer(server)
         _uiState.update { it.copy(ntpServer = server) }
-        Log.d(TAG, "切换NTP服务器: $server")
+        LogConsole.d(TAG, "切换NTP服务器: $server")
     }
 
     suspend fun syncTime(): Boolean {
-        Log.d(TAG, "开始同步NTP时间...")
+        LogConsole.d(TAG, "开始同步NTP时间...")
         _uiState.update { it.copy(isSyncing = true, syncError = null) }
 
         try {
             val success = ntpTimeService.syncTime()
-            Log.d(TAG, "NTP同步结果: $success")
+            LogConsole.d(TAG, "NTP同步结果: $success")
 
             if (success) {
                 val syncTime = ntpTimeService.getLastSyncTime()
                 val format = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
                 val timeText = format.format(java.util.Date(syncTime))
                 _uiState.update { it.copy(lastSyncTime = timeText, isSyncing = false) }
-                Log.d(TAG, "同步成功，时间: $timeText")
+                LogConsole.d(TAG, "同步成功，时间: $timeText")
             } else {
                 _uiState.update { it.copy(lastSyncTime = "同步失败", isSyncing = false, syncError = "同步失败，请检查网络") }
-                Log.w(TAG, "NTP同步失败")
+                LogConsole.w(TAG, "NTP同步失败")
             }
 
             return success
         } catch (e: Exception) {
-            Log.e(TAG, "NTP同步异常", e)
+            LogConsole.e(TAG, "NTP同步异常", e)
             _uiState.update { it.copy(lastSyncTime = "同步失败", isSyncing = false, syncError = e.message) }
             return false
         }
@@ -124,9 +125,9 @@ class SettingsViewModel @Inject constructor(
                         it.resolveInfo.serviceInfo.name == "com.jdhelper.service.AccessibilityClickService"
             }
             _uiState.update { it.copy(isAccessibilityEnabled = isAccessibilityEnabled) }
-            Log.d(TAG, "无障碍服务状态: $isAccessibilityEnabled")
+            LogConsole.d(TAG, "无障碍服务状态: $isAccessibilityEnabled")
         } catch (e: Exception) {
-            Log.e(TAG, "检查无障碍服务状态失败", e)
+            LogConsole.e(TAG, "检查无障碍服务状态失败", e)
             _uiState.update { it.copy(isAccessibilityEnabled = false) }
         }
     }
@@ -135,9 +136,9 @@ class SettingsViewModel @Inject constructor(
         try {
             val isOverlayEnabled = android.provider.Settings.canDrawOverlays(context)
             _uiState.update { it.copy(isOverlayEnabled = isOverlayEnabled) }
-            Log.d(TAG, "悬浮窗权限状态: $isOverlayEnabled")
+            LogConsole.d(TAG, "悬浮窗权限状态: $isOverlayEnabled")
         } catch (e: Exception) {
-            Log.e(TAG, "检查悬浮窗权限失败", e)
+            LogConsole.e(TAG, "检查悬浮窗权限失败", e)
             _uiState.update { it.copy(isOverlayEnabled = false) }
         }
     }

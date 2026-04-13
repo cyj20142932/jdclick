@@ -7,8 +7,6 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.content.BroadcastReceiver
 import android.graphics.PixelFormat
 import android.graphics.Point
 import android.os.Build
@@ -16,8 +14,8 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import android.view.Gravity
+import com.jdhelper.app.service.LogConsoleConsole
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -72,7 +70,8 @@ class FloatingMenuService : Service() {
     @Inject
     lateinit var timeService: TimeService
 
-    private var stateReceiver: BroadcastReceiver? = null
+    @Inject
+    lateinit var timeManager: com.jdhelper.ui.screens.time.TimeManager
 
     companion object {
         private const val TAG = "FloatingMenuService"
@@ -91,7 +90,7 @@ class FloatingMenuService : Service() {
         fun startService(context: Context) {
             // 检查服务是否已经在运行
             if (instance != null) {
-                Log.d(TAG, "服务已在运行，跳过启动")
+                LogConsole.d(TAG, "服务已在运行，跳过启动")
                 return
             }
             val intent = Intent(context, FloatingMenuService::class.java).apply {
@@ -156,7 +155,7 @@ class FloatingMenuService : Service() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        Log.d(TAG, "onCreate: 开始初始化")
+        LogConsole.d(TAG, "onCreate: 开始初始化")
         try {
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
             createNotificationChannel()
@@ -166,10 +165,10 @@ class FloatingMenuService : Service() {
                 try {
                     clickSettingsRepository.getTimeSource().collect { source ->
                         currentTimeSource = source
-                        Log.d(TAG, "时间源已设置为: $source")
+                        LogConsole.d(TAG, "时间源已设置为: $source")
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "读取时间源失败", e)
+                    LogConsole.e(TAG, "读取时间源失败", e)
                 }
             }
 
@@ -177,56 +176,15 @@ class FloatingMenuService : Service() {
             CoroutineScope(Dispatchers.IO).launch {
                 val now = System.currentTimeMillis()
                 if (!jdTimeService.isSynced() || now - lastJdSyncTime > 5 * 60 * 1000) {
-                    Log.d(TAG, "启动时同步京东时间...")
+                    LogConsole.d(TAG, "启动时同步京东时间...")
                     jdTimeService.syncJdTime()
                     lastJdSyncTime = now
                 }
             }
 
-            // 注册广播接收器
-            registerStateReceiver()
-
-            Log.d(TAG, "onCreate: 初始化完成")
+            LogConsole.d(TAG, "onCreate: 初始化完成")
         } catch (e: Exception) {
-            Log.e(TAG, "onCreate: 初始化失败", e)
-        }
-    }
-
-    /**
-     * 注册状态广播接收器
-     */
-    private fun registerStateReceiver() {
-        stateReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                when (intent?.action) {
-                    FloatingStateManager.ACTION_NTP_SYNC_CHANGED -> {
-                        val offset = intent.getLongExtra(FloatingStateManager.EXTRA_NTP_OFFSET, 0)
-                        val synced = intent.getBooleanExtra(FloatingStateManager.EXTRA_NTP_SYNCED, false)
-                        Log.d(TAG, "Received NTP sync changed: synced=$synced, offset=$offset")
-                        updateNtpStatusDisplay()
-                    }
-                    FloatingStateManager.ACTION_REFRESH_TIME -> {
-                        Log.d(TAG, "Received refresh time request")
-                        updateNtpStatusDisplay()
-                    }
-                    FloatingStateManager.ACTION_TIME_SOURCE_CHANGED -> {
-                        Log.d(TAG, "Received time source changed")
-                        updateNtpStatusDisplay()
-                    }
-                }
-            }
-        }
-
-        val filter = IntentFilter().apply {
-            addAction(FloatingStateManager.ACTION_NTP_SYNC_CHANGED)
-            addAction(FloatingStateManager.ACTION_REFRESH_TIME)
-            addAction(FloatingStateManager.ACTION_TIME_SOURCE_CHANGED)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(stateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            registerReceiver(stateReceiver, filter)
+            LogConsole.e(TAG, "onCreate: 初始化失败", e)
         }
     }
 
@@ -359,14 +317,14 @@ class FloatingMenuService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(TAG, "onStartCommand: action=${intent?.action}, startId=$startId")
+        LogConsole.d(TAG, "onStartCommand: action=${intent?.action}, startId=$startId")
         try {
             when (intent?.action) {
                 ACTION_SHOW -> showFloatingMenu()
                 ACTION_HIDE -> hideFloatingMenu()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "onStartCommand: 处理失败", e)
+            LogConsole.e(TAG, "onStartCommand: 处理失败", e)
         }
         return START_STICKY
     }
@@ -375,14 +333,6 @@ class FloatingMenuService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // 注销广播接收器
-        stateReceiver?.let {
-            try {
-                unregisterReceiver(it)
-            } catch (e: Exception) {
-                Log.e(TAG, "注销广播接收器失败", e)
-            }
-        }
         hideFloatingMenu()
         instance = null
     }
@@ -431,18 +381,18 @@ class FloatingMenuService : Service() {
 
     private fun showFloatingMenu() {
         try {
-            Log.d(TAG, "showFloatingMenu: 开始显示悬浮菜单")
+            LogConsole.d(TAG, "showFloatingMenu: 开始显示悬浮菜单")
             if (floatingView != null) {
-                Log.d(TAG, "showFloatingMenu: 视图已存在，跳过")
+                LogConsole.d(TAG, "showFloatingMenu: 视图已存在，跳过")
                 return
             }
 
             startForeground(NOTIFICATION_ID, createNotification())
-            Log.d(TAG, "showFloatingMenu: 前台服务已启动")
+            LogConsole.d(TAG, "showFloatingMenu: 前台服务已启动")
 
             val layoutInflater = LayoutInflater.from(this)
             floatingView = layoutInflater.inflate(R.layout.floating_menu, null)
-            Log.d(TAG, "showFloatingMenu: 布局已填充")
+            LogConsole.d(TAG, "showFloatingMenu: 布局已填充")
 
             // 获取按钮引用
             btnClock = floatingView?.findViewById(R.id.btn_clock)
@@ -467,30 +417,40 @@ class FloatingMenuService : Service() {
             // 初始化按钮状态
             updateAllButtonStates()
 
-            // 时钟按钮 - NTP同步并显示/刷新悬浮时钟
+            // 时钟按钮 - 根据当前时间源同步
         floatingView?.findViewById<ImageButton>(R.id.btn_clock)?.setOnClickListener {
             CoroutineScope(Dispatchers.Main).launch {
                 try {
-                    // 1. NTP校准时间
+                    // 获取当前时间源
+                    val currentSource = timeService.getCurrentTimeSource()
+
+                    // 同步当前时间源的时间
                     val synced = withContext(Dispatchers.IO) {
                         timeService.syncTime()
                     }
-                    if (!synced) {
-                        ToastUtils.show(this@FloatingMenuService, "时间同步失败，使用本地时间")
+
+                    if (synced) {
+                        val offset = timeService.getTimeOffset()
+                        val offsetText = if (offset >= 0) "+${offset}ms" else "${offset}ms"
+                        if (currentSource == TimeSource.JD) {
+                            ToastUtils.show(this@FloatingMenuService, "京东时间同步成功: $offsetText")
+                        } else {
+                            ToastUtils.show(this@FloatingMenuService, "NTP时间同步成功: $offsetText")
+                        }
+                    } else {
+                        if (currentSource == TimeSource.JD) {
+                            ToastUtils.show(this@FloatingMenuService, "京东时间同步失败，请检查网络")
+                        } else {
+                            ToastUtils.show(this@FloatingMenuService, "NTP时间同步失败，请检查网络")
+                        }
                     }
 
-                    // 同步后更新NTP状态显示（原有逻辑）
+                    // 同步后更新NTP状态显示
                     updateNtpStatusDisplay()
-
-                    // 通知状态管理器刷新（新增）
-                    val offset = timeService.getTimeOffset()
-                    floatingStateManager.notifyNtpSyncChanged(synced, offset)
-                    floatingStateManager.requestRefreshTime()
 
                     // 2. 检查悬浮时钟是否已显示，如果是则刷新，否则启动
                     if (com.jdhelper.service.FloatingService.isRunning()) {
-                        // 直接发送刷新请求，不再停止再启动
-                        floatingStateManager.requestRefreshTime()
+                        // 刷新悬浮时钟
                     } else {
                         com.jdhelper.service.FloatingService.startService(this@FloatingMenuService)
                     }
@@ -500,7 +460,7 @@ class FloatingMenuService : Service() {
 
                     ToastUtils.show(this@FloatingMenuService, "时间已刷新")
                 } catch (e: Exception) {
-                    Log.e(TAG, "时钟控制失败", e)
+                    LogConsole.e(TAG, "时钟控制失败", e)
                     ToastUtils.show(this@FloatingMenuService, "操作失败: ${e.message}")
                 }
             }
@@ -539,7 +499,7 @@ class FloatingMenuService : Service() {
                             try {
                                 val accessibilityService = AccessibilityClickService.getInstance()
                                 if (accessibilityService == null) {
-                                    Log.w(TAG, "无障碍服务未连接")
+                                    LogConsole.w(TAG, "无障碍服务未连接")
                                     delay(1000)
                                     return@launch
                                 }
@@ -551,7 +511,7 @@ class FloatingMenuService : Service() {
 
                                 if (hasPopup) {
                                     // 有弹窗，点击返回
-                                    Log.d(TAG, "检测到弹窗，执行返回")
+                                    LogConsole.d(TAG, "检测到弹窗，执行返回")
                                     accessibilityService.performBack()
                                     delay(6000) // 等待6秒
                                 }
@@ -563,12 +523,12 @@ class FloatingMenuService : Service() {
 
                                 if (clickResult == null) {
                                     // 没找到按钮，执行上滑刷新
-                                    Log.d(TAG, "未找到目标按钮，执行上滑")
+                                    LogConsole.d(TAG, "未找到目标按钮，执行上滑")
                                     accessibilityService.performSwipeUp()
                                     delay(1000)
                                 } else if (clickResult) {
                                     // 如果按钮包含"浏览"，等待9秒后返回
-                                    Log.d(TAG, "点击了浏览按钮，等待9秒")
+                                    LogConsole.d(TAG, "点击了浏览按钮，等待9秒")
                                     delay(9000)
                                     accessibilityService.performBack()
                                     delay(800)
@@ -586,7 +546,7 @@ class FloatingMenuService : Service() {
                                 delay(2000)
 
                             } catch (e: Exception) {
-                                Log.e(TAG, "循环任务异常", e)
+                                LogConsole.e(TAG, "循环任务异常", e)
                                 delay(1000)
                             }
                         }
@@ -651,7 +611,7 @@ class FloatingMenuService : Service() {
                             }
                             com.jdhelper.service.FloatingService.stopService(this@FloatingMenuService)
                         } catch (e: Exception) {
-                            Log.e(TAG, "礼物任务异常", e)
+                            LogConsole.e(TAG, "礼物任务异常", e)
                             isGiftRunning = false
                             floatingStateManager.notifyTaskStateChanged(FloatingStateManager.TASK_TYPE_GIFT, false)
                             // 更新礼物按钮图标
@@ -742,6 +702,7 @@ class FloatingMenuService : Service() {
                                 if (shouldRecord) {
                                     val localClickTime = System.currentTimeMillis()
                                     val timeSource = clickSettingsRepository.getTimeSource().first()
+                                    LogConsole.d(TAG, "保存历史记录: stage=0, timeSource=${timeSource.name}")
                                     giftClickHistoryDao.insert(
                                         GiftClickHistory(
                                             stage = 0, // 0 表示启动按钮的定时点击
@@ -772,7 +733,7 @@ class FloatingMenuService : Service() {
                     })
 
                 } catch (e: Exception) {
-                    Log.e(TAG, "启动任务失败", e)
+                    LogConsole.e(TAG, "启动任务失败", e)
                     ToastUtils.show(this@FloatingMenuService, "启动任务失败: ${e.message}")
                 }
             }
@@ -900,9 +861,9 @@ class FloatingMenuService : Service() {
         }
 
         windowManager.addView(floatingView, params)
-            Log.d(TAG, "showFloatingMenu: 完成")
-        } catch (e: Exception) {
-            Log.e(TAG, "showFloatingMenu: 失败", e)
+        LogConsole.d(TAG, "showFloatingMenu: 完成")
+    } catch (e: Exception) {
+            LogConsole.e(TAG, "showFloatingMenu: 失败", e)
         }
     }
 
@@ -921,7 +882,7 @@ class FloatingMenuService : Service() {
      */
     private suspend fun CoroutineScope.runGiftClickTaskOnce() {
         // 时间差 = JD_DELAY + DELAY + waitCorrection
-        Log.d(TAG, "=== 礼物任务开始 ===")
+        LogConsole.d(TAG, "=== 礼物任务开始 ===")
 
         // ========== 第一阶段：立即查找一键送礼按钮 ==========
         val firstButton = withContext(Dispatchers.IO) {
@@ -929,14 +890,14 @@ class FloatingMenuService : Service() {
         }
 
         if (firstButton == null) {
-            Log.d(TAG, "未找到一键送礼按钮")
+            LogConsole.d(TAG, "未找到一键送礼按钮")
             withContext(Dispatchers.Main) {
                 ToastUtils.show(this@FloatingMenuService, "未找到一键送礼按钮")
             }
             return@runGiftClickTaskOnce
         }
 
-        Log.d(TAG, "第一阶段：找到一键送礼按钮 (${firstButton.x}, ${firstButton.y})，等待整分时间")
+        LogConsole.d(TAG, "第一阶段：找到一键送礼按钮 (${firstButton.x}, ${firstButton.y})，等待整分时间")
         withContext(Dispatchers.Main) {
             ToastUtils.show(this@FloatingMenuService, "找到一键送礼，等待整分点击")
         }
@@ -947,7 +908,7 @@ class FloatingMenuService : Service() {
         // ========== 等待整分时间 - 精确到毫秒级 ==========
         // 获取延迟设置
         val clickDelay = clickSettingsRepository.getDelayMillis().first()
-        Log.d(TAG, "礼物整分点击延迟: ${clickDelay}ms")
+        LogConsole.d(TAG, "礼物整分点击延迟: ${clickDelay}ms")
 
         // 预先计算目标时间（下一个整分 + 延迟）
         val ntpTime = timeService.getCurrentTime()
@@ -961,11 +922,11 @@ class FloatingMenuService : Service() {
         val timeToTarget = targetTime - ntpTime
 
         if (timeToTarget <= 0) {
-            Log.w(TAG, "时间已过，跳过本次点击")
+            LogConsole.w(TAG, "时间已过，跳过本次点击")
             return@runGiftClickTaskOnce
         }
 
-        Log.d(TAG, "等待整分点击: 目标时间=$targetTime, 剩余=${timeToTarget}ms")
+        LogConsole.d(TAG, "等待整分点击: 目标时间=$targetTime, 剩余=${timeToTarget}ms")
 
         // 优化等待策略：使用分段等待减少CPU占用
         val spinThreshold = 50L // 精确等待阈值
@@ -989,7 +950,7 @@ class FloatingMenuService : Service() {
         }
 
         // 到达目标时间，执行点击
-        Log.d(TAG, "到达目标时间，点击一键送礼")
+        LogConsole.d(TAG, "到达目标时间，点击一键送礼")
         withContext(Dispatchers.IO) {
             AccessibilityClickService.getInstance()?.performGlobalClick(firstButton.x, firstButton.y)
         }
@@ -1002,6 +963,7 @@ class FloatingMenuService : Service() {
         if (shouldRecord) {
             val firstStageDiff = firstStageClickTime - targetTime
             val timeSource = clickSettingsRepository.getTimeSource().first()
+            LogConsole.d(TAG, "保存历史记录: stage=1, timeSource=${timeSource.name}")
             giftClickHistoryDao.insert(
                 GiftClickHistory(
                     stage = 1,
@@ -1013,11 +975,11 @@ class FloatingMenuService : Service() {
                     timeSource = timeSource.name
                 )
             )
-            Log.d(TAG, "第一阶段历史记录: 偏差=${firstStageDiff}ms")
+            LogConsole.d(TAG, "第一阶段历史记录: 偏差=${firstStageDiff}ms")
         }
 
         // ========== 第二阶段：每100ms查找付款并赠送，超时3秒 ==========
-        Log.d(TAG, "第二阶段：开始查找付款并赠送按钮")
+        LogConsole.d(TAG, "第二阶段：开始查找付款并赠送按钮")
         var secondButton: Point? = null
         val startTime = timeService.getCurrentTime()
         val timeoutMillis = 3000L
@@ -1031,7 +993,7 @@ class FloatingMenuService : Service() {
             }
 
             if (secondButton != null) {
-                Log.d(TAG, "第二阶段：找到付款并赠送按钮 (${secondButton.x}, ${secondButton.y})")
+                LogConsole.d(TAG, "第二阶段：找到付款并赠送按钮 (${secondButton.x}, ${secondButton.y})")
                 withContext(Dispatchers.IO) {
                     AccessibilityClickService.getInstance()?.performGlobalClick(secondButton.x, secondButton.y)
                 }
@@ -1042,6 +1004,7 @@ class FloatingMenuService : Service() {
                 // 记录第二阶段点击历史
                 if (shouldRecord) {
                     val timeSource = clickSettingsRepository.getTimeSource().first()
+                    LogConsole.d(TAG, "保存历史记录: stage=2, timeSource=${timeSource.name}")
                     giftClickHistoryDao.insert(
                         GiftClickHistory(
                             stage = 2,
@@ -1053,7 +1016,7 @@ class FloatingMenuService : Service() {
                             timeSource = timeSource.name
                         )
                     )
-                    Log.d(TAG, "第二阶段历史记录: 已记录")
+                    LogConsole.d(TAG, "第二阶段历史记录: 已记录")
                 }
 
                 // 点击后等待确认
@@ -1061,7 +1024,7 @@ class FloatingMenuService : Service() {
                 withContext(Dispatchers.Main) {
                     ToastUtils.show(this@FloatingMenuService, "礼物任务已完成")
                 }
-                Log.d(TAG, "=== 礼物任务成功完成 ===")
+                LogConsole.d(TAG, "=== 礼物任务成功完成 ===")
                 return@runGiftClickTaskOnce
             }
 
@@ -1070,7 +1033,7 @@ class FloatingMenuService : Service() {
         }
 
         // 超时未找到
-        Log.d(TAG, "第二阶段：未找到付款并赠送按钮，超时退出")
+        LogConsole.d(TAG, "第二阶段：未找到付款并赠送按钮，超时退出")
         withContext(Dispatchers.Main) {
             ToastUtils.show(this@FloatingMenuService, "未找到付款并赠送按钮")
         }

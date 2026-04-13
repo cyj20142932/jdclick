@@ -1,5 +1,7 @@
 package com.jdhelper.app.service
 
+import android.util.LogConsole
+import com.jdhelper.app.service.LogConsoleConsole
 import com.jdhelper.data.local.TimeSource
 import com.jdhelper.domain.repository.ClickSettingsRepository
 import com.jdhelper.service.NtpTimeService
@@ -7,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,8 +28,22 @@ class DefaultTimeService @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.Main)
 
+    // 缓存当前时间源，避免每次都从数据库读取
+    @Volatile
+    private var cachedTimeSource: TimeSource = TimeSource.NTP
+
+    init {
+        // 观察时间源变化，更新缓存
+        scope.launch {
+            clickSettingsRepository.getTimeSource().collect { source ->
+                cachedTimeSource = source
+                LogConsole.d(TAG, "时间源已更新缓存: $source")
+            }
+        }
+    }
+
     override fun getCurrentTime(): Long {
-        val source = getCurrentTimeSourceSync()
+        val source = cachedTimeSource
         return when (source) {
             TimeSource.NTP -> ntpTimeService.getCurrentTime()
             TimeSource.JD -> jdTimeService.getCurrentJdTime()
@@ -35,7 +51,7 @@ class DefaultTimeService @Inject constructor(
     }
 
     override fun getTimeOffset(): Long {
-        val source = getCurrentTimeSourceSync()
+        val source = cachedTimeSource
         return when (source) {
             TimeSource.NTP -> ntpTimeService.getTimeOffset()
             TimeSource.JD -> jdTimeService.getJdOffset()
@@ -48,7 +64,8 @@ class DefaultTimeService @Inject constructor(
     }
 
     override suspend fun syncTime(): Boolean {
-        val source = getCurrentTimeSourceSync()
+        val source = cachedTimeSource
+        LogConsole.d(TAG, "syncTime: 当前时间源 = $source")
         return when (source) {
             TimeSource.NTP -> ntpTimeService.syncTime()
             TimeSource.JD -> jdTimeService.syncJdTime()
@@ -56,21 +73,11 @@ class DefaultTimeService @Inject constructor(
     }
 
     override fun getCurrentTimeSource(): TimeSource {
-        return getCurrentTimeSourceSync()
-    }
-
-    private fun getCurrentTimeSourceSync(): TimeSource {
-        return try {
-            runBlocking {
-                clickSettingsRepository.getTimeSource().first()
-            }
-        } catch (e: Exception) {
-            TimeSource.NTP // 默认使用 NTP
-        }
+        return cachedTimeSource
     }
 
     override fun isSynced(): Boolean {
-        val source = getCurrentTimeSourceSync()
+        val source = cachedTimeSource
         return when (source) {
             TimeSource.NTP -> ntpTimeService.isSynced()
             TimeSource.JD -> jdTimeService.isSynced()

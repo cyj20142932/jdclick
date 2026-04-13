@@ -15,7 +15,8 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.util.Log
+import android.util.LogConsole
+import com.jdhelper.app.service.LogConsoleConsole
 import androidx.core.app.NotificationCompat
 import com.jdhelper.R
 import com.jdhelper.ui.MainActivity
@@ -39,7 +40,7 @@ class PositionFloatingService : Service() {
         fun startService(context: Context) {
             // 检查服务是否已经在运行
             if (instance != null) {
-                Log.d(TAG, "服务已在运行，跳过启动")
+                LogConsole.d(TAG, "服务已在运行，跳过启动")
                 return
             }
             val intent = Intent(context, PositionFloatingService::class.java).apply {
@@ -67,17 +68,17 @@ class PositionFloatingService : Service() {
     override fun onCreate() {
         super.onCreate()
         instance = this
-        Log.d(TAG, "onCreate: instance set to this")
+        LogConsole.d(TAG, "onCreate: instance set to this")
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
-        Log.d(TAG, "onCreate: notification channel created")
+        LogConsole.d(TAG, "onCreate: notification channel created")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(TAG, "onStartCommand: action=${intent?.action}")
+        LogConsole.d(TAG, "onStartCommand: action=${intent?.action}")
         when (intent?.action) {
             ACTION_SHOW -> {
-                Log.d(TAG, "onStartCommand: showing floating window")
+                LogConsole.d(TAG, "onStartCommand: showing floating window")
                 showFloatingWindow()
             }
             ACTION_HIDE -> hideFloatingWindow()
@@ -132,18 +133,18 @@ class PositionFloatingService : Service() {
     }
 
     private fun showFloatingWindow() {
-        Log.d(TAG, "showFloatingWindow: started")
+        LogConsole.d(TAG, "showFloatingWindow: started")
         if (floatingView != null) {
-            Log.d(TAG, "showFloatingWindow: already exists, returning")
+            LogConsole.d(TAG, "showFloatingWindow: already exists, returning")
             return
         }
 
         startForeground(NOTIFICATION_ID, createNotification())
-        Log.d(TAG, "showFloatingWindow: foreground started")
+        LogConsole.d(TAG, "showFloatingWindow: foreground started")
 
         val layoutInflater = LayoutInflater.from(this)
         floatingView = layoutInflater.inflate(R.layout.floating_position, null)
-        Log.d(TAG, "showFloatingWindow: view inflated")
+        LogConsole.d(TAG, "showFloatingWindow: view inflated")
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,

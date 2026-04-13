@@ -1,6 +1,7 @@
 package com.jdhelper.app.service
 
-import android.util.Log
+import android.util.LogConsole
+import com.jdhelper.app.service.LogConsoleConsole
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -19,7 +20,7 @@ class JdTimeService @Inject constructor() {
         const val REQUEST_TIMEOUT = 2000L
 
         @Volatile
-        private var sharedJdOffset: Long = 0L  // 京东时间差
+        private var sharedJdOffset: Long = 0L  // 京东时间差（本地时间 - 京东时间）
     }
 
     private val client = OkHttpClient.Builder()
@@ -37,104 +38,93 @@ class JdTimeService @Inject constructor() {
                 val result = requestJdTime()
                 if (result != null) {
                     sharedJdOffset = result
-                    Log.d(TAG, "京东时间同步成功: offset=${result}ms")
+                    LogConsole.d(TAG, "京东时间同步成功: offset=${result}ms")
                     return@withContext true
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "第 $attempt/$MAX_RETRIES 次获取京东时间失败: ${e.message}")
+                LogConsole.w(TAG, "第 $attempt/$MAX_RETRIES 次获取京东时间失败: ${e.message}")
             }
         }
-        Log.e(TAG, "京东时间同步失败，已达到最大重试次数")
+        LogConsole.e(TAG, "京东时间同步失败，已达到最大重试次数")
         return@withContext false
     }
 
     /**
      * 请求京东服务器时间
+     * 从 x-api-request-id 响应头获取精确到毫秒的时间戳
+     * 格式：通过 "-" 分割后取最后一位
      */
     private fun requestJdTime(): Long? {
         val request = Request.Builder()
             .url(JD_API_URL)
             .header("User-Agent", "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36")
             .header("Accept", "application/json")
-            .header("Cookie", "wskey=whatever") // 模拟登录态
+            .header("Cookie", "wskey=whatever")
             .build()
 
-        val startTime = System.currentTimeMillis()
+        val requestTime = System.currentTimeMillis()
 
         return try {
             val response = client.newCall(request).execute()
+            val responseTime = System.currentTimeMillis()
+
             if (!response.isSuccessful) {
-                Log.w(TAG, "请求失败: ${response.code}")
+                LogConsole.w(TAG, "请求失败: ${response.code}")1
+                1
+
                 return null
             }
 
-            val endTime = System.currentTimeMillis()
-            val roundTripTime = endTime - startTime
+            // 从响应头 x-api-request-id 获取时间戳
+            val requestId = response.header("x-api-request-id")
+            if (requestId == null) {
+                LogConsole.w(TAG, "响应头中未找到 x-api-request-id")
+                return null
+            }
+
+            // 通过 "-" 分割，取最后一部分作为毫秒时间戳
+            val parts = requestId.split("-")
+            val timestampStr = parts.lastOrNull()
+            if (timestampStr == null) {
+                LogConsole.w(TAG, "x-api-request-id 格式异常: $requestId")
+                return null
+            }
+
+            // 尝试解析时间戳（可能是纯数字或带有其他字符）
+            val serverTimestamp = timestampStr.toLongOrNull()
+            if (serverTimestamp == null) {
+                LogConsole.w(TAG, "无法解析时间戳: $timestampStr, 原始: $requestId")
+                return null
+            }
+
+            // 如果时间戳是13位毫秒级，直接使用；否则可能是秒级，需要转换
+            val finalServerTime = if (serverTimestamp > 9999999999L) {
+                serverTimestamp  // 已经是毫秒级时间戳
+            } else {
+                serverTimestamp * 1000  // 秒级转换为毫秒
+            }
+
+            // 计算网络延迟（往返时间 / 2）
+            val roundTripTime = responseTime - requestTime
             val networkDelay = roundTripTime / 2
 
-            // 方案1: 从响应头获取服务器时间戳
-            var serverTimestamp: Long? = null
+            // 计算服务器时间的本地等价时刻
+            val localTimeAtServer = requestTime + networkDelay
 
-            // 尝试从 Date 头获取
-            val dateHeader = response.header("Date")
-            if (dateHeader != null) {
-                try {
-                    val df = java.text.SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", java.util.Locale.US)
-                    df.timeZone = java.util.TimeZone.getTimeZone("GMT")
-                    val parsedDate = df.parse(dateHeader)
-                    serverTimestamp = parsedDate?.time
-                    Log.d(TAG, "从Date头获取到时间: $dateHeader -> $serverTimestamp")
-                } catch (e: Exception) {
-                    Log.w(TAG, "解析Date头失败: ${e.message}")
-                }
-            }
+            // 时间差 = 本地时间 - 服务器时间
+            // 正值表示本地时间比京东服务器快
+            val timeDiff = localTimeAtServer - finalServerTime
 
-            // 方案2: 尝试从响应体获取服务器时间
-            if (serverTimestamp == null) {
-                val body = response.body?.string()
-                if (body != null) {
-                    // 尝试查找时间戳字段
-                    val timestampRegex = Regex("\"(serverTime|serverTime|timestamp)\":?\\s*(\\d+)")
-                    timestampRegex.find(body)?.let { match ->
-                        match.groupValues.getOrNull(2)?.toLongOrNull()?.let { ts ->
-                            serverTimestamp = ts
-                            Log.d(TAG, "从响应体获取到时间戳: $ts")
-                        }
-                    }
-                }
-            }
+            LogConsole.d(TAG, "x-api-request-id: $requestId")
+            LogConsole.d(TAG, "解析时间戳: $timestampStr -> $finalServerTime")
+            LogConsole.d(TAG, "请求时间: $requestTime, 响应时间: $responseTime")
+            LogConsole.d(TAG, "往返延迟: ${roundTripTime}ms, 单向延迟估算: ${networkDelay}ms")
+            LogConsole.d(TAG, "服务器时间: $finalServerTime, 本地等价时刻: $localTimeAtServer")
+            LogConsole.d(TAG, "时间差: ${timeDiff}ms")
 
-            if (serverTimestamp == null) {
-                // 方案3: 使用响应头的 Last-Modified 或其他时间
-                val lastModified = response.header("Last-Modified")
-                if (lastModified != null) {
-                    try {
-                        val df = java.text.SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", java.util.Locale.US)
-                        df.timeZone = java.util.TimeZone.getTimeZone("GMT")
-                        val parsedDate = df.parse(lastModified)
-                        serverTimestamp = parsedDate?.time
-                        Log.d(TAG, "从Last-Modified头获取到时间: $lastModified -> $serverTimestamp")
-                    } catch (e: Exception) {
-                        Log.w(TAG, "解析Last-Modified头失败: ${e.message}")
-                    }
-                }
-            }
-
-            // 如果仍然无法获取服务器时间，使用本地时间但标记为同步失败
-            if (serverTimestamp == null) {
-                Log.w(TAG, "无法从响应中提取服务器时间")
-                return null
-            }
-
-            // 计算时间差
-            val ts = serverTimestamp ?: return null
-            val localTimeAtMidpoint = startTime + networkDelay
-            val timeDiff = localTimeAtMidpoint - ts
-
-            Log.d(TAG, "RTT=$roundTripTime ms, 网络延迟=${networkDelay}ms, 服务器时间=${ts}, 时间差=${timeDiff}ms")
             timeDiff
         } catch (e: Exception) {
-            Log.e(TAG, "请求京东时间异常: ${e.message}")
+            LogConsole.e(TAG, "请求京东时间异常: ${e.message}")
             null
         }
     }

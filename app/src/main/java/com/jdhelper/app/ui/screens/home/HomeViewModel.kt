@@ -4,7 +4,8 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.Application
 import android.content.Context
 import android.provider.Settings
-import android.util.Log
+import android.util.LogConsole
+import com.jdhelper.app.service.LogConsoleConsole
 import android.view.accessibility.AccessibilityManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -43,7 +44,8 @@ data class HomeUiState(
     val isNtpSyncing: Boolean = false,
     val ntpLastSyncTime: String = "从未同步",
     val ntpTimeOffset: String = "",
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val syncMessage: String = ""  // 同步结果消息
 )
 
 @HiltViewModel
@@ -51,6 +53,7 @@ class HomeViewModel @Inject constructor(
     private val ntpTimeService: NtpTimeService,
     private val jdTimeService: JdTimeService,
     private val timeService: TimeService,
+    private val timeManager: com.jdhelper.ui.screens.time.TimeManager,
     private val clickSettingsRepository: ClickSettingsRepository,
     private val floatingStateManager: FloatingStateManager,
     @ApplicationContext private val context: Context
@@ -102,7 +105,7 @@ class HomeViewModel @Inject constructor(
                 try {
                     checkServiceStatus(context)
                 } catch (e: Exception) {
-                    Log.e(TAG, "刷新服务状态失败", e)
+                    LogConsole.e(TAG, "刷新服务状态失败", e)
                 }
             }
         }
@@ -126,9 +129,9 @@ class HomeViewModel @Inject constructor(
                         it.resolveInfo.serviceInfo.name == "com.jdhelper.service.AccessibilityClickService"
             }
             _uiState.update { it.copy(isAccessibilityEnabled = isAccessibilityEnabled) }
-            Log.d(TAG, "无障碍服务状态: $isAccessibilityEnabled")
+            LogConsole.d(TAG, "无障碍服务状态: $isAccessibilityEnabled")
         } catch (e: Exception) {
-            Log.e(TAG, "检查无障碍服务失败", e)
+            LogConsole.e(TAG, "检查无障碍服务失败", e)
             _uiState.update { it.copy(isAccessibilityEnabled = false) }
         }
     }
@@ -138,9 +141,9 @@ class HomeViewModel @Inject constructor(
             val ctx = context
             val isOverlayEnabled = Settings.canDrawOverlays(context)
             _uiState.update { it.copy(isOverlayEnabled = isOverlayEnabled) }
-            Log.d(TAG, "悬浮窗权限状态: $isOverlayEnabled")
+            LogConsole.d(TAG, "悬浮窗权限状态: $isOverlayEnabled")
         } catch (e: Exception) {
-            Log.e(TAG, "检查悬浮窗权限失败", e)
+            LogConsole.e(TAG, "检查悬浮窗权限失败", e)
             _uiState.update { it.copy(isOverlayEnabled = false) }
         }
     }
@@ -205,21 +208,44 @@ class HomeViewModel @Inject constructor(
     }
 
     suspend fun syncNtpTime(): Boolean {
-        val currentSource = timeService.getCurrentTimeSource()
+        _uiState.update { it.copy(isNtpSyncing = true) }
 
-        // 根据时间源执行同步
-        return if (currentSource == TimeSource.JD) {
-            syncJdTime()
-        } else {
-            syncNtpTimeInternal()
+        // 使用 timeManager 同步，会自动根据当前时间源同步
+        val success = timeManager.syncTime()
+
+        // 获取同步消息
+        val message = timeManager.getSyncResultMessage()
+
+        // 更新 UI 状态，显示同步结果
+        val currentSource = timeService.getCurrentTimeSource()
+        _uiState.update {
+            it.copy(
+                isNtpSyncing = false,
+                syncMessage = message,
+                ntpLastSyncTime = if (success) {
+                    val format = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+                    format.format(java.util.Date())
+                } else {
+                    "同步失败"
+                },
+                ntpTimeOffset = if (success) {
+                    val offset = timeService.getTimeOffset()
+                    if (offset >= 0) "+${offset}ms" else "${offset}ms"
+                } else {
+                    ""
+                }
+            )
         }
+
+        LogConsole.d(TAG, "同步完成: source=$currentSource, success=$success, message=$message")
+        return success
     }
 
     /**
      * NTP时间同步（内部方法）
      */
     private suspend fun syncNtpTimeInternal(): Boolean {
-        Log.d(TAG, "开始同步NTP时间...")
+        LogConsole.d(TAG, "开始同步NTP时间...")
         _uiState.update { it.copy(isNtpSyncing = true) }
 
         try {
@@ -237,20 +263,15 @@ class HomeViewModel @Inject constructor(
                 _uiState.update { it.copy(ntpLastSyncTime = timeText, ntpTimeOffset = offsetText, isNtpSyncing = false) }
                 // 更新偏差显示
                 _ntpOffset.value = offsetText
-                Log.d(TAG, "NTP同步成功: $timeText, 偏差: $offsetText")
-
-                // 新增：通知状态变化，广播给所有悬浮窗即时刷新
-                floatingStateManager.notifyNtpSyncChanged(success, offset)
-                floatingStateManager.requestRefreshTime()
-                Log.d(TAG, "已发送广播通知刷新")
+                LogConsole.d(TAG, "NTP同步成功: $timeText, 偏差: $offsetText")
             } else {
                 _uiState.update { it.copy(ntpLastSyncTime = "同步失败", isNtpSyncing = false) }
-                Log.w(TAG, "NTP同步失败")
+                LogConsole.w(TAG, "NTP同步失败")
             }
 
             return success
         } catch (e: Exception) {
-            Log.e(TAG, "NTP同步异常", e)
+            LogConsole.e(TAG, "NTP同步异常", e)
             _uiState.update { it.copy(ntpLastSyncTime = "同步失败", isNtpSyncing = false) }
             return false
         }
@@ -271,18 +292,20 @@ class HomeViewModel @Inject constructor(
      */
     fun setTimeSource(source: TimeSource) {
         viewModelScope.launch {
-            clickSettingsRepository.setTimeSource(source)
-            _uiState.update { it.copy() }
-            Log.d(TAG, "时间源已切换为: $source")
+            _uiState.update { it.copy(isNtpSyncing = true) }
 
-            // 切换到京东时间源时，自动同步京东时间
-            if (source == TimeSource.JD) {
-                syncJdTime()
+            val success = timeManager.switchTimeSource(source)
+
+            // 获取同步消息
+            val message = timeManager.getSyncResultMessage()
+            _uiState.update {
+                it.copy(
+                    isNtpSyncing = false,
+                    syncMessage = message
+                )
             }
 
-            // 通知所有悬浮窗时间源已切换
-            floatingStateManager.notifyTimeSourceChanged(source)
-            floatingStateManager.requestRefreshTime()
+            LogConsole.d(TAG, "时间源已切换为: $source, 同步结果: $success, 消息: $message")
         }
     }
 
@@ -297,19 +320,14 @@ class HomeViewModel @Inject constructor(
             if (success) {
                 val offset = jdTimeService.getJdOffset()
                 _jdOffset.value = if (offset >= 0) "+${offset}ms" else "${offset}ms"
-                Log.d(TAG, "京东时间同步成功: ${_jdOffset.value}")
-
-                // 通知状态变化，广播给所有悬浮窗即时刷新
-                floatingStateManager.notifyNtpSyncChanged(true, offset)
-                floatingStateManager.requestRefreshTime()
-                Log.d(TAG, "已发送广播通知刷新")
+                LogConsole.d(TAG, "京东时间同步成功: ${_jdOffset.value}")
                 result = true
             } else {
                 _jdOffset.value = "同步失败"
-                Log.w(TAG, "京东时间同步失败")
+                LogConsole.w(TAG, "京东时间同步失败")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "京东时间同步异常", e)
+            LogConsole.e(TAG, "京东时间同步异常", e)
             _jdOffset.value = "同步失败"
         }
         _uiState.update { it.copy(isNtpSyncing = false) }
@@ -317,6 +335,16 @@ class HomeViewModel @Inject constructor(
     }
 
     fun isNtpSyncing(): Boolean = _uiState.value.isNtpSyncing
+
+    /**
+     * 显示同步消息（需要在主线程调用）
+     */
+    fun showSyncMessage(context: android.content.Context) {
+        val message = _uiState.value.syncMessage
+        if (message.isNotEmpty()) {
+            android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
 
     fun isAccessibilityEnabled(): Boolean = _uiState.value.isAccessibilityEnabled
 
@@ -334,19 +362,16 @@ class HomeViewModel @Inject constructor(
      */
     fun startTimeUpdates() {
         viewModelScope.launch {
-            while (true) {
+            timeManager.currentTime.collect { time ->
                 try {
-                    // 使用统一的时间服务获取当前时间
-                    val time = timeService.getCurrentTime()
                     val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
                     val millisFormat = SimpleDateFormat("SSS", Locale.getDefault())
                     _ntpTime.value = sdf.format(Date(time))
                     _millis.value = millisFormat.format(Date(time))
                     updateTimeOffset()
                 } catch (e: Exception) {
-                    Log.e(TAG, "更新时间失败", e)
+                    LogConsole.e(TAG, "更新时间失败", e)
                 }
-                delay(10) // 每10ms更新一次毫秒
             }
         }
     }
@@ -391,7 +416,7 @@ class HomeViewModel @Inject constructor(
                     val secs = seconds % 60
                     _nextClickCountdown.value = String.format("%02d:%02d", minutes, secs)
                 } catch (e: Exception) {
-                    Log.e(TAG, "更新倒计时失败", e)
+                    LogConsole.e(TAG, "更新倒计时失败", e)
                 }
                 delay(1000)
             }

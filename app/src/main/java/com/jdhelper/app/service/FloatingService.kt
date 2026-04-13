@@ -5,17 +5,16 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.provider.Settings
-import android.util.Log
+import android.util.LogConsole
+import com.jdhelper.app.service.LogConsoleConsole
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
@@ -68,7 +67,7 @@ class FloatingService : Service() {
         fun startService(context: Context) {
             // 检查服务是否已经在运行
             if (instance != null) {
-                Log.d(TAG, "服务已在运行，跳过启动")
+                LogConsole.d(TAG, "服务已在运行，跳过启动")
                 return
             }
             val intent = Intent(context, FloatingService::class.java).apply {
@@ -115,6 +114,9 @@ class FloatingService : Service() {
     @Inject
     lateinit var clickSettingsRepository: ClickSettingsRepository
 
+    @Inject
+    lateinit var timeManager: com.jdhelper.ui.screens.time.TimeManager
+
     private var initialX = 0
     private var initialY = 0
     private var initialTouchX = 0f
@@ -122,8 +124,6 @@ class FloatingService : Service() {
 
     private var isPositionMode = false
     private var onPositionCallback: ((Int, Int) -> Unit)? = null
-    // 状态接收器
-    private var stateReceiver: BroadcastReceiver? = null
 
     // 时间源相关
     private var currentTimeSource: TimeSource = TimeSource.NTP
@@ -145,10 +145,10 @@ class FloatingService : Service() {
             try {
                 clickSettingsRepository.getTimeSource().collect { source ->
                     currentTimeSource = source
-                    Log.d(TAG, "时间源已设置为: $source")
+                    LogConsole.d(TAG, "时间源已设置为: $source")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "读取时间源失败", e)
+                LogConsole.e(TAG, "读取时间源失败", e)
             }
         }
 
@@ -156,7 +156,7 @@ class FloatingService : Service() {
         CoroutineScope(Dispatchers.IO).launch {
             val now = System.currentTimeMillis()
             if (!jdTimeService.isSynced() || now - lastJdSyncTime > 5 * 60 * 1000) {
-                Log.d(TAG, "启动时同步京东时间...")
+                LogConsole.d(TAG, "启动时同步京东时间...")
                 jdTimeService.syncJdTime()
                 lastJdSyncTime = now
             }
@@ -166,7 +166,7 @@ class FloatingService : Service() {
         try {
             FloatingStateManager.getInstance()
         } catch (e: Exception) {
-            Log.e(TAG, "FloatingStateManager not initialized yet", e)
+            LogConsole.e(TAG, "FloatingStateManager not initialized yet", e)
         }
     }
 
@@ -188,16 +188,6 @@ class FloatingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // 取消注册广播接收器
-        stateReceiver?.let {
-            try {
-                unregisterReceiver(it)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to unregister receiver", e)
-            }
-        }
-        stateReceiver = null
-
         hideFloatingWindow()
         timeUpdateJob?.cancel()
         instance = null
@@ -315,9 +305,6 @@ class FloatingService : Service() {
             }
         }
 
-        // 注册广播接收器
-        registerStateReceiver()
-
         windowManager.addView(floatingView, params)
         startTimeUpdate()
     }
@@ -331,46 +318,6 @@ class FloatingService : Service() {
         stopForeground(STOP_FOREGROUND_REMOVE)
     }
 
-    // 注册广播接收器
-    private fun registerStateReceiver() {
-        stateReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                when (intent?.action) {
-                    FloatingStateManager.ACTION_NTP_SYNC_CHANGED -> {
-                        val offset = intent.getLongExtra(FloatingStateManager.EXTRA_NTP_OFFSET, 0)
-                        val synced = intent.getBooleanExtra(FloatingStateManager.EXTRA_NTP_SYNCED, false)
-                        Log.d(TAG, "Received NTP sync changed: synced=$synced, offset=$offset")
-                        // 立即刷新时间显示
-                        updateTimeDisplay()
-                    }
-                    FloatingStateManager.ACTION_TASK_STATE_CHANGED -> {
-                        val taskType = intent.getStringExtra(FloatingStateManager.EXTRA_TASK_TYPE) ?: return
-                        val running = intent.getBooleanExtra(FloatingStateManager.EXTRA_TASK_RUNNING, false)
-                        Log.d(TAG, "Received task state changed: taskType=$taskType, running=$running")
-                        // 可以添加任务状态指示更新
-                    }
-                    FloatingStateManager.ACTION_REFRESH_TIME -> {
-                        Log.d(TAG, "Received refresh time request")
-                        updateTimeDisplay()
-                    }
-                }
-            }
-        }
-
-        val filter = IntentFilter().apply {
-            addAction(FloatingStateManager.ACTION_NTP_SYNC_CHANGED)
-            addAction(FloatingStateManager.ACTION_TASK_STATE_CHANGED)
-            addAction(FloatingStateManager.ACTION_REFRESH_TIME)
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(stateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            @Suppress("UnspecifiedRegisterReceiverFlag")
-            registerReceiver(stateReceiver, filter)
-        }
-    }
-
     private fun toggleFloatingWindow() {
         if (floatingView != null) {
             hideFloatingWindow()
@@ -381,15 +328,13 @@ class FloatingService : Service() {
 
     private fun startTimeUpdate() {
         timeUpdateJob = CoroutineScope(Dispatchers.Main).launch {
-            while (isActive) {
-                updateTimeDisplay()
-                delay(10) // 10ms刷新一次，实现毫秒级精度
+            timeManager.currentTime.collect { time ->
+                updateTimeDisplay(time)
             }
         }
     }
 
-    private fun updateTimeDisplay() {
-        val displayTime = timeService.getCurrentTime()
+    private fun updateTimeDisplay(displayTime: Long) {
         val date = Date(displayTime)
 
         // 读取毫秒格式设置

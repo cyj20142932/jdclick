@@ -1,7 +1,8 @@
 package com.jdhelper.service
 
 import android.content.Context
-import android.util.Log
+import android.util.LogConsole
+import com.jdhelper.app.service.LogConsoleConsole
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.net.ntp.NTPUDPClient
@@ -36,6 +37,10 @@ class NtpTimeService @Inject constructor(
 
         @Volatile
         private var sharedLastSyncTime: Long = 0L
+
+        // NTP时间偏移量（固定值，同步后不再变化）
+        @Volatile
+        private var sharedTimeOffset: Long = 0L
     }
 
     // 当前使用的NTP服务器
@@ -47,19 +52,21 @@ class NtpTimeService @Inject constructor(
      */
     suspend fun syncTime(): Boolean = withContext(Dispatchers.IO) {
         try {
-            Log.d(TAG, "开始请求NTP时间: $currentServer")
+            LogConsole.d(TAG, "开始请求NTP时间: $currentServer")
             val ntpTime = requestNtpTime(currentServer)
-            Log.d(TAG, "请求结果 ntpTime: $ntpTime")
+            LogConsole.d(TAG, "请求结果 ntpTime: $ntpTime")
             if (ntpTime > 0) {
+                // 计算并保存固定的偏移量
+                sharedTimeOffset = ntpTime - System.currentTimeMillis()
                 sharedCurrentTimeMillis = ntpTime
                 sharedLastSyncTime = System.currentTimeMillis()
-                Log.d(TAG, "NTP同步成功，当前时间: $sharedCurrentTimeMillis")
+                LogConsole.d(TAG, "NTP同步成功，偏移量: ${sharedTimeOffset}ms, 当前时间: $sharedCurrentTimeMillis")
                 return@withContext true
             } else {
-                Log.w(TAG, "NTP返回无效时间: $ntpTime")
+                LogConsole.w(TAG, "NTP返回无效时间: $ntpTime")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "NTP同步异常", e)
+            LogConsole.e(TAG, "NTP同步异常", e)
         }
         false
     }
@@ -77,12 +84,12 @@ class NtpTimeService @Inject constructor(
 
             // 获取校正后的时间
             val ntpTime = timeInfo.message.receiveTimeStamp.time
-            Log.d(TAG, "NTP返回时间: $ntpTime")
+            LogConsole.d(TAG, "NTP返回时间: $ntpTime")
 
             client.close()
             ntpTime
         } catch (e: Exception) {
-            Log.e(TAG, "NTP请求异常: ${e.message}")
+            LogConsole.e(TAG, "NTP请求异常: ${e.message}")
             -1
         }
     }
@@ -96,7 +103,7 @@ class NtpTimeService @Inject constructor(
         return if (sharedLastSyncTime > 0 && timeSinceLastSync < 300000) { // 5分钟内使用缓存
             sharedCurrentTimeMillis + timeSinceLastSync
         } else {
-            Log.d(TAG, "getCurrentTime: 未同步或超过5分钟，使用系统时间")
+            LogConsole.d(TAG, "getCurrentTime: 未同步或超过5分钟，使用系统时间")
             currentSystemTime
         }
     }
@@ -114,10 +121,11 @@ class NtpTimeService @Inject constructor(
     /**
      * 获取时间偏差（NTP时间 - 本地时间）
      * 正数代表NTP时间快于本地时间，负数代表慢于本地时间
+     * 返回固定的偏移量，同步后不再变化
      */
     fun getTimeOffset(): Long {
         if (!isSynced()) return 0L
-        return sharedCurrentTimeMillis - sharedLastSyncTime
+        return sharedTimeOffset
     }
 
     fun getCurrentServer(): String = currentServer
@@ -125,7 +133,7 @@ class NtpTimeService @Inject constructor(
     fun setServer(server: String) {
         if (NTP_SERVERS.contains(server)) {
             currentServer = server
-            Log.d(TAG, "切换NTP服务器: $server")
+            LogConsole.d(TAG, "切换NTP服务器: $server")
         }
     }
 }
