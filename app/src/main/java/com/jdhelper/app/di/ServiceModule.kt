@@ -3,8 +3,10 @@ package com.jdhelper.app.di
 import android.content.Context
 import com.jdhelper.app.service.DefaultTimeService
 import com.jdhelper.app.service.JdTimeService
+import com.jdhelper.app.service.LogConsole
 import com.jdhelper.app.service.TimeService
 import com.jdhelper.domain.repository.ClickSettingsRepository
+import com.jdhelper.domain.repository.LogRepository
 import com.jdhelper.service.NtpTimeService
 import dagger.Module
 import dagger.Provides
@@ -32,4 +34,13 @@ object ServiceModule {
     ): TimeService {
         return DefaultTimeService(ntpTimeService, jdTimeService, clickSettingsRepository)
     }
+
+    @Provides
+    @Singleton
+    fun provideLogConsoleInitializer(logRepository: LogRepository): LogConsoleInitializer {
+        LogConsole.setRepository(logRepository)
+        return LogConsoleInitializer()
+    }
 }
+
+class LogConsoleInitializer
