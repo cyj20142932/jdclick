@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.jdhelper.data.local.AutoClickerDatabase
 import com.jdhelper.data.local.ClickSettingsDao
 import com.jdhelper.data.local.GiftClickHistoryDao
+import com.jdhelper.data.local.LogDao
 import com.jdhelper.data.repository.ClickSettingsRepositoryImpl
 import com.jdhelper.domain.repository.ClickSettingsRepository
 import dagger.Module
@@ -40,6 +41,12 @@ object DatabaseModule {
     @Singleton
     fun provideGiftClickHistoryDao(database: AutoClickerDatabase): GiftClickHistoryDao {
         return database.giftClickHistoryDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideLogDao(database: AutoClickerDatabase): LogDao {
+        return database.logDao()
     }
 
     @Provides
