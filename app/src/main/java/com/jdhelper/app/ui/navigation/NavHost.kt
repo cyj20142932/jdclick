@@ -5,6 +5,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -24,11 +25,13 @@ import androidx.navigation.compose.rememberNavController
 import com.jdhelper.ui.screens.home.HomeScreen
 import com.jdhelper.ui.screens.settings.SettingsScreen
 import com.jdhelper.ui.screens.history.HistoryScreen
+import com.jdhelper.ui.screens.log.LogScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Home : Screen("home", "首页", Icons.Default.Home)
     data object Settings : Screen("settings", "设置", Icons.Default.Settings)
     data object History : Screen("history", "历史", Icons.Default.History)
+    data object Log : Screen("log", "日志", Icons.Default.Terminal)
 }
 
 val bottomNavItems = listOf(
@@ -87,6 +90,12 @@ fun JDHelperNavHost(
 
             composable(Screen.History.route) {
                 HistoryScreen()
+            }
+
+            composable(Screen.Log.route) {
+                LogScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
         }
     }
