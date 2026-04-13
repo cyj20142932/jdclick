@@ -4,8 +4,8 @@ import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.Application
 import android.content.Context
 import android.provider.Settings
-import android.util.LogConsole
-import com.jdhelper.app.service.LogConsoleConsole
+import android.util.Log
+import com.jdhelper.app.service.LogConsole
 import android.view.accessibility.AccessibilityManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

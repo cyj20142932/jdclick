@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.jdhelper.app.data.local.LogEntry
+import com.jdhelper.data.local.LogEntry
 import com.jdhelper.app.service.LogConsole
 import java.text.SimpleDateFormat
 import java.util.*
@@ -24,7 +24,6 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LogScreen(
-    onNavigateBack: () -> Unit,
     viewModel: LogViewModel = hiltViewModel()
 ) {
     val logs by viewModel.logs.collectAsState()
@@ -35,11 +34,6 @@ fun LogScreen(
         topBar = {
             TopAppBar(
                 title = { Text("日志") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "返回")
-                    }
-                },
                 actions = {
                     IconButton(onClick = { viewModel.showClearDialog() }) {
                         Icon(Icons.Default.DeleteSweep, contentDescription = "清空")

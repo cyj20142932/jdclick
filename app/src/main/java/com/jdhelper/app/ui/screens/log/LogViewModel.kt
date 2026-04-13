@@ -2,7 +2,7 @@ package com.jdhelper.ui.screens.log
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jdhelper.app.data.local.LogEntry
+import com.jdhelper.data.local.LogEntry
 import com.jdhelper.domain.repository.LogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow

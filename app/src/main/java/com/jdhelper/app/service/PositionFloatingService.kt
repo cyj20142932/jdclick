@@ -15,8 +15,8 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
-import android.util.LogConsole
-import com.jdhelper.app.service.LogConsoleConsole
+import android.util.Log
+import com.jdhelper.app.service.LogConsole
 import androidx.core.app.NotificationCompat
 import com.jdhelper.R
 import com.jdhelper.ui.MainActivity

@@ -107,6 +107,12 @@ fun HistoryItemCard(
     val ntpTimeStr = remember(item.ntpClickTime) { timeFormat.format(Date(item.ntpClickTime)) }
     val localTimeStr = remember(item.localClickTime) { timeFormat.format(Date(item.localClickTime)) }
 
+    // 根据时间源动态显示标签，处理null和空字符串情况
+    val itemTimeSource = item.timeSource?.uppercase()?.trim() ?: ""
+    val isJdSource = itemTimeSource == "JD"
+    val serverTimeLabel = if (isJdSource) "京东" else "NTP"
+    val serverTimeColor = if (isJdSource) Color(0xFF67C23A) else Color(0xFF409EFF)
+
     val stageText = when (item.stage) {
         0 -> "启动按钮:定时点击"
         1 -> "第一阶段:一键送礼"
@@ -169,9 +175,10 @@ fun HistoryItemCard(
                 // 时间信息
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        "NTP: $ntpTimeStr",
+                        "$serverTimeLabel: $ntpTimeStr",
                         style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        color = serverTimeColor
                     )
                     Text(
                         "本机: $localTimeStr",
@@ -185,13 +192,10 @@ fun HistoryItemCard(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
-                    // 时间源显示
-                    val timeSourceColor = when (item.timeSource) {
-                        "JD" -> Color(0xFF67C23A)  // 绿色
-                        else -> Color(0xFF409EFF)   // 蓝色
-                    }
+                    // 时间源显示 - 使用已有的itemTimeSource变量
+                    val timeSourceColor = if (isJdSource) Color(0xFF67C23A) else Color(0xFF409EFF)
                     Text(
-                        "时间源: ${item.timeSource}",
+                        "时间源: ${item.timeSource ?: "NTP"}",
                         style = MaterialTheme.typography.bodySmall,
                         color = timeSourceColor
                     )

@@ -37,7 +37,8 @@ sealed class Screen(val route: String, val title: String, val icon: ImageVector)
 val bottomNavItems = listOf(
     Screen.Home,
     Screen.Settings,
-    Screen.History
+    Screen.History,
+    Screen.Log
 )
 
 @Composable
@@ -93,9 +94,7 @@ fun JDHelperNavHost(
             }
 
             composable(Screen.Log.route) {
-                LogScreen(
-                    onNavigateBack = { navController.popBackStack() }
-                )
+                LogScreen()
             }
         }
     }

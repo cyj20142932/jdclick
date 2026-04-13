@@ -1,8 +1,8 @@
 package com.jdhelper.service
 
 import android.content.Context
-import android.util.LogConsole
-import com.jdhelper.app.service.LogConsoleConsole
+import android.util.Log
+import com.jdhelper.app.service.LogConsole
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.net.ntp.NTPUDPClient

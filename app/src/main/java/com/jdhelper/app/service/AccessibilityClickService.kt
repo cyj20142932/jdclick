@@ -4,8 +4,8 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.graphics.Path
 import android.graphics.Point
-import android.util.LogConsole
-import com.jdhelper.app.service.LogConsoleConsole
+import android.util.Log
+import com.jdhelper.app.service.LogConsole
 import android.view.accessibility.AccessibilityNodeInfo
 
 class AccessibilityClickService : AccessibilityService() {

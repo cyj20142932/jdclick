@@ -1,7 +1,7 @@
 package com.jdhelper.app.service
 
-import android.util.LogConsole
-import com.jdhelper.app.service.LogConsoleConsole
+import android.util.Log
+import com.jdhelper.app.service.LogConsole
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -69,9 +69,7 @@ class JdTimeService @Inject constructor() {
             val responseTime = System.currentTimeMillis()
 
             if (!response.isSuccessful) {
-                LogConsole.w(TAG, "请求失败: ${response.code}")1
-                1
-
+                LogConsole.w(TAG, "请求失败: ${response.code}")
                 return null
             }
 

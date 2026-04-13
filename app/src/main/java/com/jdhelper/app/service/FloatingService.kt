@@ -13,8 +13,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.provider.Settings
-import android.util.LogConsole
-import com.jdhelper.app.service.LogConsoleConsole
+import android.util.Log
+import com.jdhelper.app.service.LogConsole
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent

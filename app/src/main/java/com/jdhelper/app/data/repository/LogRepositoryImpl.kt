@@ -1,4 +1,4 @@
-package com.jdhelper.app.data.repository
+package com.jdhelper.data.repository
 
 import com.jdhelper.data.local.LogDao
 import com.jdhelper.data.local.LogEntry

@@ -14,8 +14,9 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import android.view.Gravity
-import com.jdhelper.app.service.LogConsoleConsole
+import com.jdhelper.app.service.LogConsole
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View

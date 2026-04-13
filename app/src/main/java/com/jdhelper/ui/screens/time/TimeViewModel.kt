@@ -1,7 +1,7 @@
 package com.jdhelper.ui.screens.time
 
-import android.util.LogConsole
-import com.jdhelper.app.service.LogConsoleConsole
+import android.util.Log
+import com.jdhelper.app.service.LogConsole
 import com.jdhelper.app.service.TimeService
 import com.jdhelper.data.local.TimeSource
 import com.jdhelper.domain.repository.ClickSettingsRepository

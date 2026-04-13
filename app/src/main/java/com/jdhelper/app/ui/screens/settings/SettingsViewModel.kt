@@ -3,8 +3,8 @@ package com.jdhelper.ui.screens.settings
 import android.app.Application
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
-import android.util.LogConsole
-import com.jdhelper.app.service.LogConsoleConsole
+import android.util.Log
+import com.jdhelper.app.service.LogConsole
 import android.view.accessibility.AccessibilityManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

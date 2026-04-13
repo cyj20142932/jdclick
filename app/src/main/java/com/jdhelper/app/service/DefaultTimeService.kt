@@ -1,7 +1,7 @@
 package com.jdhelper.app.service
 
-import android.util.LogConsole
-import com.jdhelper.app.service.LogConsoleConsole
+import android.util.Log
+import com.jdhelper.app.service.LogConsole
 import com.jdhelper.data.local.TimeSource
 import com.jdhelper.domain.repository.ClickSettingsRepository
 import com.jdhelper.service.NtpTimeService
