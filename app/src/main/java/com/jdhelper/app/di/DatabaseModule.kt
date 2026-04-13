@@ -7,7 +7,9 @@ import com.jdhelper.data.local.ClickSettingsDao
 import com.jdhelper.data.local.GiftClickHistoryDao
 import com.jdhelper.data.local.LogDao
 import com.jdhelper.data.repository.ClickSettingsRepositoryImpl
+import com.jdhelper.data.repository.LogRepositoryImpl
 import com.jdhelper.domain.repository.ClickSettingsRepository
+import com.jdhelper.domain.repository.LogRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,5 +55,11 @@ object DatabaseModule {
     @Singleton
     fun provideClickSettingsRepository(clickSettingsDao: ClickSettingsDao, @ApplicationContext context: Context): ClickSettingsRepository {
         return ClickSettingsRepositoryImpl(clickSettingsDao, context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLogRepository(logDao: LogDao): LogRepository {
+        return LogRepositoryImpl(logDao)
     }
 }
