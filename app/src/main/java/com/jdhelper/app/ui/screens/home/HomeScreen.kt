@@ -20,9 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.navigation.NavController
 import com.jdhelper.app.ui.components.StatusCard
 import com.jdhelper.app.ui.components.TopStatusBar
 import com.jdhelper.data.local.TimeSource
+import com.jdhelper.ui.navigation.Screen
 import com.jdhelper.ui.theme.DarkSurface
 import com.jdhelper.ui.theme.DarkBackground
 import kotlinx.coroutines.launch
@@ -30,6 +32,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    navController: NavController? = null,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -262,6 +265,8 @@ fun HomeScreen(
                     TextButton(onClick = {
                         scope.launch {
                             viewModel.syncNtpTime()
+                            // 同步完成后显示消息
+                            viewModel.showSyncMessage(context)
                         }
                     }) {
                         Icon(
@@ -304,6 +309,20 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("检查权限", style = MaterialTheme.typography.labelMedium)
+                    }
+
+                    // 日志按钮
+                    TextButton(onClick = {
+                        navController?.navigate(Screen.Log.route)
+                    }) {
+                        Icon(
+                            Icons.Default.Terminal,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("日志", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }

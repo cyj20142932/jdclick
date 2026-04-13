@@ -81,7 +81,7 @@ fun JDHelperNavHost(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Home.route) {
-                HomeScreen()
+                HomeScreen(navController = navController)
             }
 
             composable(Screen.Settings.route) {
