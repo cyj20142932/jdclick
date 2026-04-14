@@ -1,6 +1,5 @@
 package com.jdhelper.service
 
-import android.util.Log
 import com.jdhelper.app.service.LogConsole
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -80,7 +79,8 @@ class TimedClickManager @Inject constructor(
      */
     private fun scheduleClick() {
         val ntpTime = timeService.getCurrentTime()
-        plannedClickTime = calculateNextMinuteTime(ntpTime, delayMillis)
+        // 计划点击时间：下一个整分时刻（时间服务已包含延迟）
+        plannedClickTime = calculateNextMinuteTime(ntpTime)
 
         // 使用NTP时间计算延迟
         val delay = plannedClickTime - ntpTime
@@ -128,9 +128,9 @@ class TimedClickManager @Inject constructor(
     }
 
     /**
-     * 计算下一个整分时刻+延迟的时间
+     * 计算下一个整分时刻的时间
      */
-    private fun calculateNextMinuteTime(ntpTime: Long, delayMillis: Double): Long {
+    private fun calculateNextMinuteTime(ntpTime: Long): Long {
         val calendar = Calendar.getInstance().apply {
             timeInMillis = ntpTime
         }
@@ -140,7 +140,7 @@ class TimedClickManager @Inject constructor(
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
 
-        // 加上延迟（支持负数）
-        return calendar.timeInMillis + delayMillis.toLong()
+        // 不再在这里加上 delayMillis，时间服务已包含延迟补偿
+        return calendar.timeInMillis
     }
 }
