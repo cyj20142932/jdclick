@@ -90,3 +90,6 @@ lint/tmp/
 # Claude Code
 .claude/
 .superpowers/
+
+# Git worktrees
+.worktrees/
