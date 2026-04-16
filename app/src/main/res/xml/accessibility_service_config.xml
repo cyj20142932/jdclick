@@ -7,4 +7,4 @@
     android:canRetrieveWindowContent="true"
     android:description="@string/accessibility_service_label"
     android:notificationTimeout="100"
-    android:settingsActivity="com.jdhelper.ui.MainActivity" />
+    android:settingsActivity="com.jdhelper.app.ui.MainActivity" />
