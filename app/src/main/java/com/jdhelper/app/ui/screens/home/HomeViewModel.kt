@@ -1,22 +1,23 @@
-package com.jdhelper.ui.screens.home
+package com.jdhelper.app.ui.screens.home
 
 import android.accessibilityservice.AccessibilityServiceInfo
-import android.app.Application
 import android.content.Context
+import android.os.Build
 import android.provider.Settings
-import android.util.Log
 import com.jdhelper.app.service.LogConsole
 import android.view.accessibility.AccessibilityManager
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jdhelper.service.FloatingMenuService
-import com.jdhelper.service.FloatingService
+import com.jdhelper.app.service.FloatingMenuService
+import com.jdhelper.app.service.FloatingService
 import com.jdhelper.app.service.TimeService
 import com.jdhelper.app.service.JdTimeService
 import com.jdhelper.app.service.FloatingStateManager
-import com.jdhelper.data.local.TimeSource
-import com.jdhelper.domain.repository.ClickSettingsRepository
-import com.jdhelper.service.NtpTimeService
+import com.jdhelper.app.data.local.TimeSource
+import com.jdhelper.app.domain.repository.ClickSettingsRepository
+import com.jdhelper.app.service.NtpTimeService
+import com.jdhelper.app.ui.screens.time.TimeManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.cancel
@@ -27,7 +28,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -53,7 +53,7 @@ class HomeViewModel @Inject constructor(
     private val ntpTimeService: NtpTimeService,
     private val jdTimeService: JdTimeService,
     private val timeService: TimeService,
-    private val timeManager: com.jdhelper.ui.screens.time.TimeManager,
+    private val timeManager: TimeManager,
     private val clickSettingsRepository: ClickSettingsRepository,
     private val floatingStateManager: FloatingStateManager,
     @ApplicationContext private val context: Context
@@ -184,6 +184,7 @@ class HomeViewModel @Inject constructor(
     /**
      * 切换悬浮时钟状态 - 主动更新UI状态，不等待服务回调
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     fun toggleFloatingService(context: Context) {
         if (FloatingService.isRunning()) {
             FloatingService.stopService(context)

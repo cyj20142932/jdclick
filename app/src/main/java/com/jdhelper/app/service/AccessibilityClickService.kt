@@ -1,4 +1,4 @@
-package com.jdhelper.service
+package com.jdhelper.app.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription

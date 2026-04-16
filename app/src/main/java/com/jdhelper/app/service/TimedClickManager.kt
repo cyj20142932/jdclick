@@ -1,6 +1,5 @@
-package com.jdhelper.service
+package com.jdhelper.app.service
 
-import com.jdhelper.app.service.LogConsole
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -9,7 +8,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.concurrent.locks.LockSupport
-import com.jdhelper.app.service.TimeService
 import javax.inject.Inject
 import javax.inject.Singleton
 

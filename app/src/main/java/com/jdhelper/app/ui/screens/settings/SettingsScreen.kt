@@ -1,4 +1,4 @@
-package com.jdhelper.ui.screens.settings
+package com.jdhelper.app.ui.screens.settings
 
 import android.content.Intent
 import android.net.Uri

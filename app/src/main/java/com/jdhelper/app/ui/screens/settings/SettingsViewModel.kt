@@ -1,4 +1,4 @@
-package com.jdhelper.ui.screens.settings
+package com.jdhelper.app.ui.screens.settings
 
 import android.app.Application
 import android.accessibilityservice.AccessibilityServiceInfo
@@ -8,10 +8,10 @@ import com.jdhelper.app.service.LogConsole
 import android.view.accessibility.AccessibilityManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jdhelper.data.local.GiftClickHistory
-import com.jdhelper.data.local.GiftClickHistoryDao
-import com.jdhelper.domain.repository.ClickSettingsRepository
-import com.jdhelper.service.NtpTimeService
+import com.jdhelper.app.data.local.GiftClickHistoryDao
+import com.jdhelper.app.domain.repository.ClickSettingsRepository
+import com.jdhelper.app.service.AccessibilityClickService
+import com.jdhelper.app.service.NtpTimeService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -163,7 +163,7 @@ class SettingsViewModel @Inject constructor(
         val validDuration = duration.coerceAtLeast(50) // 最小50ms
         clickSettingsRepository.setClickDuration(validDuration)
         // 同时更新 AccessibilityClickService 的静态变量
-        com.jdhelper.service.AccessibilityClickService.clickDuration = validDuration
+        AccessibilityClickService.clickDuration = validDuration
     }
 
     fun getGiftClickHistory() = giftClickHistoryDao.getRecentHistory()

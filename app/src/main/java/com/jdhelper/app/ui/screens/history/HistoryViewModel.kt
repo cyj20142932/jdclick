@@ -1,10 +1,10 @@
-package com.jdhelper.ui.screens.history
+package com.jdhelper.app.ui.screens.history
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jdhelper.data.local.GiftClickHistory
-import com.jdhelper.data.local.GiftClickHistoryDao
+import com.jdhelper.app.data.local.GiftClickHistory
+import com.jdhelper.app.data.local.GiftClickHistoryDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers

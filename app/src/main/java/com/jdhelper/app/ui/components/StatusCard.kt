@@ -18,10 +18,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.jdhelper.ui.theme.BlueGreenEnd
-import com.jdhelper.ui.theme.BlueGreenStart
-import com.jdhelper.ui.theme.DarkSurface
-import com.jdhelper.ui.theme.StatusGreen
+import com.jdhelper.app.ui.theme.BlueGreenEnd
+import com.jdhelper.app.ui.theme.BlueGreenStart
+import com.jdhelper.app.ui.theme.DarkSurface
+import com.jdhelper.app.ui.theme.StatusGreen
 
 @Composable
 fun StatusCard(

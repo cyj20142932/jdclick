@@ -1,8 +1,8 @@
 package com.jdhelper.app.service
 
 import android.util.Log
-import com.jdhelper.data.local.LogEntry
-import com.jdhelper.domain.repository.LogRepository
+import com.jdhelper.app.data.local.LogEntry
+import com.jdhelper.app.domain.repository.LogRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

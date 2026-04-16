@@ -1,4 +1,4 @@
-package com.jdhelper.ui.theme
+package com.jdhelper.app.ui.theme
 
 import android.app.Activity
 import android.os.Build

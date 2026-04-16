@@ -1,6 +1,6 @@
-package com.jdhelper.domain.repository
+package com.jdhelper.app.domain.repository
 
-import com.jdhelper.data.local.TimeSource
+import com.jdhelper.app.data.local.TimeSource
 import kotlinx.coroutines.flow.Flow
 
 interface ClickSettingsRepository {

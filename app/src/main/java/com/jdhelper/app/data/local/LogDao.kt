@@ -1,4 +1,4 @@
-package com.jdhelper.data.local
+package com.jdhelper.app.data.local
 
 import androidx.room.Dao
 import androidx.room.Insert

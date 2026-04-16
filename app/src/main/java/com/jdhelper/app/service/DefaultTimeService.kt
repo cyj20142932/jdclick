@@ -2,7 +2,7 @@ package com.jdhelper.app.service
 
 import com.jdhelper.app.data.local.TimeSource
 import com.jdhelper.app.domain.repository.ClickSettingsRepository
-import com.jdhelper.service.NtpTimeService
+import com.jdhelper.app.service.NtpTimeService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow

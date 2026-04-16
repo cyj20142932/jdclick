@@ -1,4 +1,4 @@
-package com.jdhelper.service
+package com.jdhelper.app.service
 
 import android.content.Context
 import android.util.Log

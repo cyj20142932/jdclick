@@ -1,4 +1,4 @@
-package com.jdhelper.service
+package com.jdhelper.app.service
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -16,10 +16,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.util.Log
+import androidx.annotation.RequiresApi
 import com.jdhelper.app.service.LogConsole
 import androidx.core.app.NotificationCompat
 import com.jdhelper.R
-import com.jdhelper.ui.MainActivity
+import com.jdhelper.app.ui.MainActivity
 
 class PositionFloatingService : Service() {
 
@@ -37,6 +38,7 @@ class PositionFloatingService : Service() {
 
         fun getInstance(): PositionFloatingService? = instance
 
+        @RequiresApi(Build.VERSION_CODES.O)
         fun startService(context: Context) {
             // 检查服务是否已经在运行
             if (instance != null) {
@@ -65,6 +67,7 @@ class PositionFloatingService : Service() {
 
     private var onPositionCallback: ((Int, Int) -> Unit)? = null
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -94,6 +97,7 @@ class PositionFloatingService : Service() {
         instance = null
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,

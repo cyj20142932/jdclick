@@ -1,4 +1,4 @@
-package com.jdhelper.service
+package com.jdhelper.app.service
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -13,28 +13,23 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.provider.Settings
-import android.util.Log
-import com.jdhelper.app.service.LogConsole
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.jdhelper.R
-import com.jdhelper.app.service.FloatingStateManager
-import com.jdhelper.app.service.JdTimeService
-import com.jdhelper.app.service.TimeService
-import com.jdhelper.data.local.TimeSource
-import com.jdhelper.domain.repository.ClickSettingsRepository
-import com.jdhelper.ui.MainActivity
+import com.jdhelper.app.data.local.TimeSource
+import com.jdhelper.app.domain.repository.ClickSettingsRepository
+import com.jdhelper.app.ui.MainActivity
+import com.jdhelper.app.ui.screens.time.TimeManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -64,6 +59,7 @@ class FloatingService : Service() {
 
         fun isRunning(): Boolean = instance != null
 
+        @RequiresApi(Build.VERSION_CODES.O)
         fun startService(context: Context) {
             // 检查服务是否已经在运行
             if (instance != null) {
@@ -84,6 +80,7 @@ class FloatingService : Service() {
         /**
          * 刷新悬浮时钟（先停止再启动）
          */
+        @RequiresApi(Build.VERSION_CODES.O)
         fun refreshService(context: Context) {
             val wasRunning = instance != null
             if (wasRunning) {
@@ -115,7 +112,7 @@ class FloatingService : Service() {
     lateinit var clickSettingsRepository: ClickSettingsRepository
 
     @Inject
-    lateinit var timeManager: com.jdhelper.ui.screens.time.TimeManager
+    lateinit var timeManager: TimeManager
 
     private var initialX = 0
     private var initialY = 0
@@ -129,6 +126,7 @@ class FloatingService : Service() {
     private var currentTimeSource: TimeSource = TimeSource.NTP
     private var lastJdSyncTime: Long = 0L
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -193,6 +191,7 @@ class FloatingService : Service() {
         instance = null
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
@@ -327,8 +326,7 @@ class FloatingService : Service() {
     }
 
     private fun startTimeUpdate() {
-        timeUpdateJob = CoroutineScope(Dispatchers.Main).launch {
-            timeManager.currentTime.collect { time ->
+        timeUpdateJob = CoroutineScope(Dispatchers.Main).launch { timeManager.currentTime.collect { time ->
                 updateTimeDisplay(time)
             }
         }

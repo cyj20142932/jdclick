@@ -1,4 +1,4 @@
-package com.jdhelper.ui.screens.home
+package com.jdhelper.app.ui.screens.home
 
 import android.content.Intent
 import android.net.Uri
@@ -23,10 +23,10 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
 import com.jdhelper.app.ui.components.StatusCard
 import com.jdhelper.app.ui.components.TopStatusBar
-import com.jdhelper.data.local.TimeSource
-import com.jdhelper.ui.navigation.Screen
-import com.jdhelper.ui.theme.DarkSurface
-import com.jdhelper.ui.theme.DarkBackground
+import com.jdhelper.app.data.local.TimeSource
+import com.jdhelper.app.ui.navigation.Screen
+import com.jdhelper.app.ui.theme.DarkSurface
+import com.jdhelper.app.ui.theme.DarkBackground
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

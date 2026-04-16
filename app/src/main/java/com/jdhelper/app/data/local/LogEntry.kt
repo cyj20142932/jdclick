@@ -1,4 +1,4 @@
-package com.jdhelper.data.local
+package com.jdhelper.app.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

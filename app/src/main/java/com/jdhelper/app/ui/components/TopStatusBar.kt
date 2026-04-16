@@ -14,9 +14,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jdhelper.data.local.TimeSource
-import com.jdhelper.ui.theme.BlueGreenEnd
-import com.jdhelper.ui.theme.BlueGreenStart
+import com.jdhelper.app.data.local.TimeSource
+import com.jdhelper.app.ui.theme.BlueGreenEnd
+import com.jdhelper.app.ui.theme.BlueGreenStart
 
 @Composable
 fun TopStatusBar(

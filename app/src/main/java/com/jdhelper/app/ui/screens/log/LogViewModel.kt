@@ -1,9 +1,9 @@
-package com.jdhelper.ui.screens.log
+package com.jdhelper.app.ui.screens.log
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jdhelper.data.local.LogEntry
-import com.jdhelper.domain.repository.LogRepository
+import com.jdhelper.app.data.local.LogEntry
+import com.jdhelper.app.domain.repository.LogRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

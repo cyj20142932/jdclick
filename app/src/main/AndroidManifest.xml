@@ -68,7 +68,7 @@
 
         <!-- 悬浮菜单服务 -->
         <service
-            android:name=".service.FloatingMenuService"
+            android:name=".app.service.FloatingMenuService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
@@ -91,7 +91,7 @@
 
         <!-- 开机自启接收器 -->
         <receiver
-            android:name=".receiver.BootReceiver"
+            android:name=".app.receiver.BootReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />

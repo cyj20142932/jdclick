@@ -1,4 +1,4 @@
-package com.jdhelper.ui.screens.log
+package com.jdhelper.app.ui.screens.log
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.jdhelper.data.local.LogEntry
+import com.jdhelper.app.data.local.LogEntry
 import com.jdhelper.app.service.LogConsole
 import java.text.SimpleDateFormat
 import java.util.*

@@ -1,8 +1,8 @@
-package com.jdhelper
+package com.jdhelper.app
 
 import android.app.Application
 import android.content.Context
-import com.jdhelper.service.AccessibilityClickService
+import com.jdhelper.app.service.AccessibilityClickService
 import dagger.hilt.android.HiltAndroidApp
 
 private const val PREFS_NAME = "click_settings"

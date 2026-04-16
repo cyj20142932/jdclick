@@ -5,9 +5,9 @@ import com.jdhelper.app.service.DefaultTimeService
 import com.jdhelper.app.service.JdTimeService
 import com.jdhelper.app.service.LogConsole
 import com.jdhelper.app.service.TimeService
-import com.jdhelper.domain.repository.ClickSettingsRepository
-import com.jdhelper.domain.repository.LogRepository
-import com.jdhelper.service.NtpTimeService
+import com.jdhelper.app.domain.repository.ClickSettingsRepository
+import com.jdhelper.app.domain.repository.LogRepository
+import com.jdhelper.app.service.NtpTimeService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

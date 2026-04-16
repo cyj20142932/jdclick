@@ -1,19 +1,18 @@
-package com.jdhelper.ui.screens.time
+package com.jdhelper.app.ui.screens.time
 
-import android.util.Log
 import com.jdhelper.app.service.LogConsole
 import com.jdhelper.app.service.TimeService
-import com.jdhelper.data.local.TimeSource
-import com.jdhelper.domain.repository.ClickSettingsRepository
+import com.jdhelper.app.data.local.TimeSource
+import com.jdhelper.app.domain.repository.ClickSettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -73,7 +72,7 @@ class TimeManager @Inject constructor(
 
     init {
         // 观察当前时间 - 使用 timer 每 10ms 更新
-        val timeFlow = kotlinx.coroutines.flow.flow {
+        val timeFlow = flow {
             while (true) {
                 emit(timeService.getCurrentTime())
                 delay(10)

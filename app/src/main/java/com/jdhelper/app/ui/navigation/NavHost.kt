@@ -1,4 +1,4 @@
-package com.jdhelper.ui.navigation
+package com.jdhelper.app.ui.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -22,10 +22,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.jdhelper.ui.screens.home.HomeScreen
-import com.jdhelper.ui.screens.settings.SettingsScreen
-import com.jdhelper.ui.screens.history.HistoryScreen
-import com.jdhelper.ui.screens.log.LogScreen
+import com.jdhelper.app.ui.screens.home.HomeScreen
+import com.jdhelper.app.ui.screens.settings.SettingsScreen
+import com.jdhelper.app.ui.screens.history.HistoryScreen
+import com.jdhelper.app.ui.screens.log.LogScreen
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Home : Screen("home", "首页", Icons.Default.Home)

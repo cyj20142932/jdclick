@@ -1,6 +1,6 @@
-package com.jdhelper.domain.repository
+package com.jdhelper.app.domain.repository
 
-import com.jdhelper.data.local.LogEntry
+import com.jdhelper.app.data.local.LogEntry
 import kotlinx.coroutines.flow.Flow
 
 interface LogRepository {

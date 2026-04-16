@@ -1,15 +1,15 @@
-package com.jdhelper.di
+package com.jdhelper.app.di
 
 import android.content.Context
 import androidx.room.Room
-import com.jdhelper.data.local.AutoClickerDatabase
-import com.jdhelper.data.local.ClickSettingsDao
-import com.jdhelper.data.local.GiftClickHistoryDao
-import com.jdhelper.data.local.LogDao
-import com.jdhelper.data.repository.ClickSettingsRepositoryImpl
-import com.jdhelper.data.repository.LogRepositoryImpl
-import com.jdhelper.domain.repository.ClickSettingsRepository
-import com.jdhelper.domain.repository.LogRepository
+import com.jdhelper.app.data.local.AutoClickerDatabase
+import com.jdhelper.app.data.local.ClickSettingsDao
+import com.jdhelper.app.data.local.GiftClickHistoryDao
+import com.jdhelper.app.data.local.LogDao
+import com.jdhelper.app.data.repository.ClickSettingsRepositoryImpl
+import com.jdhelper.app.data.repository.LogRepositoryImpl
+import com.jdhelper.app.domain.repository.ClickSettingsRepository
+import com.jdhelper.app.domain.repository.LogRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -1,8 +1,8 @@
-package com.jdhelper.data.repository
+package com.jdhelper.app.data.repository
 
-import com.jdhelper.data.local.LogDao
-import com.jdhelper.data.local.LogEntry
-import com.jdhelper.domain.repository.LogRepository
+import com.jdhelper.app.data.local.LogDao
+import com.jdhelper.app.data.local.LogEntry
+import com.jdhelper.app.domain.repository.LogRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton

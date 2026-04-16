@@ -1,4 +1,4 @@
-package com.jdhelper.ui
+package com.jdhelper.app.ui
 
 import android.content.Intent
 import android.net.Uri
@@ -12,8 +12,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
-import com.jdhelper.ui.navigation.JDHelperNavHost
-import com.jdhelper.ui.theme.JDHelperTheme
+import com.jdhelper.app.ui.navigation.JDHelperNavHost
+import com.jdhelper.app.ui.theme.JDHelperTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

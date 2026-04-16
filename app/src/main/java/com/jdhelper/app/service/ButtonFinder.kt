@@ -1,9 +1,10 @@
-package com.jdhelper.service
+package com.jdhelper.app.service
 
 import android.content.Context
 import android.graphics.Point
 import android.graphics.Rect
 import android.util.DisplayMetrics
+import android.view.WindowManager
 import android.view.accessibility.AccessibilityNodeInfo
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -125,7 +126,7 @@ class ButtonFinder @Inject constructor(
      */
     fun getDefaultPosition(): Point {
         val metrics = DisplayMetrics()
-        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as android.view.WindowManager
+        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
         @Suppress("DEPRECATION")
         windowManager.defaultDisplay.getMetrics(metrics)
 

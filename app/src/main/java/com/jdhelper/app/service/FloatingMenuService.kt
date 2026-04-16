@@ -1,4 +1,4 @@
-package com.jdhelper.service
+package com.jdhelper.app.service
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Point
 import android.os.Build
@@ -14,9 +15,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
-import android.util.Log
 import android.view.Gravity
-import com.jdhelper.app.service.LogConsole
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -25,15 +24,11 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import com.jdhelper.R
-import com.jdhelper.data.local.GiftClickHistory
-import com.jdhelper.data.local.GiftClickHistoryDao
-import com.jdhelper.data.local.TimeSource
-import com.jdhelper.domain.repository.ClickSettingsRepository
-import com.jdhelper.service.ButtonFinder
-import com.jdhelper.app.service.FloatingStateManager
-import com.jdhelper.app.service.JdTimeService
-import com.jdhelper.app.service.TimeService
-import com.jdhelper.ui.MainActivity
+import com.jdhelper.app.data.local.TimeSource
+import com.jdhelper.app.data.local.GiftClickHistory
+import com.jdhelper.app.data.local.GiftClickHistoryDao
+import com.jdhelper.app.domain.repository.ClickSettingsRepository
+import com.jdhelper.app.ui.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,9 +44,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class FloatingMenuService : Service() {
-
-    @Inject
-    lateinit var ntpTimeService: NtpTimeService
 
     @Inject
     lateinit var timedClickManager: TimedClickManager
@@ -70,9 +62,6 @@ class FloatingMenuService : Service() {
 
     @Inject
     lateinit var timeService: TimeService
-
-    @Inject
-    lateinit var timeManager: com.jdhelper.ui.screens.time.TimeManager
 
     companion object {
         private const val TAG = "FloatingMenuService"
@@ -99,7 +88,7 @@ class FloatingMenuService : Service() {
             }
             // Android 8.0 (API 26) 及以上使用 startForegroundService
             // 低版本使用 startService（minSdk=24 理论上不需要，但为安全起见）
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
             } else {
                 @Suppress("DEPRECATION")
@@ -195,7 +184,7 @@ class FloatingMenuService : Service() {
     private fun updateAllButtonStates() {
         // 更新时钟按钮图标（运行中用不同颜色/样式表示）
         btnClock?.setImageResource(
-            if (com.jdhelper.service.FloatingService.isRunning())
+            if (FloatingService.isRunning())
                 android.R.drawable.ic_menu_recent_history
             else
                 android.R.drawable.ic_menu_recent_history
@@ -240,13 +229,13 @@ class FloatingMenuService : Service() {
             textClockStatus?.text = "时钟: ${currentSource.name}已同步"
 
             // 状态指示条设为绿色
-            statusIndicator?.setBackgroundColor(android.graphics.Color.parseColor("#4CAF50"))
+            statusIndicator?.setBackgroundColor(Color.parseColor("#4CAF50"))
         } else {
             textNtpOffset?.text = "--ms"
             textClockStatus?.text = "时钟: ${currentSource.name}未同步"
 
             // 状态指示条设为灰色
-            statusIndicator?.setBackgroundColor(android.graphics.Color.parseColor("#888888"))
+            statusIndicator?.setBackgroundColor(Color.parseColor("#888888"))
         }
     }
 
@@ -263,8 +252,8 @@ class FloatingMenuService : Service() {
     private fun updateOverallStatus() {
         val isAnyRunning = isLoopRunning || isGiftRunning || timedClickManager.isRunning()
         statusIndicator?.setBackgroundColor(
-            if (isAnyRunning) android.graphics.Color.parseColor("#4CAF50")
-            else android.graphics.Color.parseColor("#888888")
+            if (isAnyRunning) Color.parseColor("#4CAF50")
+            else Color.parseColor("#888888")
         )
     }
 
@@ -272,7 +261,7 @@ class FloatingMenuService : Service() {
      * 更新时钟按钮图标
      */
     private fun updateClockButtonState() {
-        isClockRunning = com.jdhelper.service.FloatingService.isRunning()
+        isClockRunning = FloatingService.isRunning()
         btnClock?.setImageResource(
             if (isClockRunning)
                 android.R.drawable.ic_menu_recent_history
@@ -450,10 +439,10 @@ class FloatingMenuService : Service() {
                     updateNtpStatusDisplay()
 
                     // 2. 检查悬浮时钟是否已显示，如果是则刷新，否则启动
-                    if (com.jdhelper.service.FloatingService.isRunning()) {
+                    if (FloatingService.isRunning()) {
                         // 刷新悬浮时钟
                     } else {
-                        com.jdhelper.service.FloatingService.startService(this@FloatingMenuService)
+                        FloatingService.startService(this@FloatingMenuService)
                     }
 
                     // 3. 更新时钟按钮图标（立即切换）
@@ -475,7 +464,7 @@ class FloatingMenuService : Service() {
                 loopJob = null
                 isLoopRunning = false
                 floatingStateManager.notifyTaskStateChanged(FloatingStateManager.TASK_TYPE_LOOP, false)
-                com.jdhelper.service.FloatingService.stopService(this@FloatingMenuService)
+                FloatingService.stopService(this@FloatingMenuService)
                 // 更新锁按钮图标
                 updateLockButtonState()
                 // 更新状态指示点
@@ -567,7 +556,7 @@ class FloatingMenuService : Service() {
                 giftJob = null
                 isGiftRunning = false
                 floatingStateManager.notifyTaskStateChanged(FloatingStateManager.TASK_TYPE_GIFT, false)
-                com.jdhelper.service.FloatingService.stopService(this)
+                FloatingService.stopService(this)
                 // 更新礼物按钮图标
                 updateGiftButtonState()
                 // 更新状态指示点
@@ -595,7 +584,7 @@ class FloatingMenuService : Service() {
                     }
 
                     // 2. 直接启动悬浮时钟
-                    com.jdhelper.service.FloatingService.startService(this@FloatingMenuService)
+                    FloatingService.startService(this@FloatingMenuService)
 
                     // 3. 启动礼物点击逻辑
                     giftJob = launch {
@@ -610,7 +599,7 @@ class FloatingMenuService : Service() {
                                 updateTaskIndicator(indicatorGift, false)
                                 updateOverallStatus()
                             }
-                            com.jdhelper.service.FloatingService.stopService(this@FloatingMenuService)
+                            FloatingService.stopService(this@FloatingMenuService)
                         } catch (e: Exception) {
                             LogConsole.e(TAG, "礼物任务异常", e)
                             isGiftRunning = false
@@ -622,7 +611,7 @@ class FloatingMenuService : Service() {
                                 updateTaskIndicator(indicatorGift, false)
                                 updateOverallStatus()
                             }
-                            com.jdhelper.service.FloatingService.stopService(this@FloatingMenuService)
+                            FloatingService.stopService(this@FloatingMenuService)
                             withContext(Dispatchers.Main) {
                                 ToastUtils.show(this@FloatingMenuService, "礼物任务终止: ${e.message}")
                             }
@@ -636,7 +625,7 @@ class FloatingMenuService : Service() {
         floatingView?.findViewById<ImageButton>(R.id.btn_play)?.setOnClickListener {
             // 先停止现有任务
             timedClickManager.stop()
-            com.jdhelper.service.FloatingService.stopService(this)
+            FloatingService.stopService(this)
             // 更新播放按钮图标
             updatePlayButtonState()
 
@@ -645,8 +634,8 @@ class FloatingMenuService : Service() {
             if (accessibilityService == null) {
                 ToastUtils.show(this@FloatingMenuService, "请先开启无障碍服务")
                 // 跳转到无障碍服务设置页面
-                val intent = android.content.Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 startActivity(intent)
                 return@setOnClickListener
             }
@@ -682,7 +671,7 @@ class FloatingMenuService : Service() {
                     }
 
                     // 3. 直接启动悬浮时钟（而不是refresh，因为前面已经stop了）
-                    com.jdhelper.service.FloatingService.startService(this@FloatingMenuService)
+                    FloatingService.startService(this@FloatingMenuService)
 
                     // 4. 更新播放按钮图标为暂停状态
                     updatePlayButtonState()
@@ -723,7 +712,7 @@ class FloatingMenuService : Service() {
                                 ToastUtils.show(this@FloatingMenuService, "已执行点击")
                                 floatingStateManager.notifyTaskStateChanged(FloatingStateManager.TASK_TYPE_TIMED, false)
                                 // 点击完成后停止悬浮时钟
-                                com.jdhelper.service.FloatingService.stopService(this@FloatingMenuService)
+                                FloatingService.stopService(this@FloatingMenuService)
                                 // 更新播放按钮图标为播放状态
                                 updatePlayButtonState()
                                 // 更新状态指示点
@@ -755,7 +744,7 @@ class FloatingMenuService : Service() {
             timedClickManager.stop()
 
             // 停止悬浮时钟
-            com.jdhelper.service.FloatingService.stopService(this)
+            FloatingService.stopService(this)
 
             // 通知状态管理器所有任务已停止
             floatingStateManager.notifyTaskStateChanged(FloatingStateManager.TASK_TYPE_LOOP, false)
@@ -785,7 +774,7 @@ class FloatingMenuService : Service() {
             timedClickManager.stop()
 
             // 停止悬浮时钟
-            com.jdhelper.service.FloatingService.stopService(this)
+            FloatingService.stopService(this)
 
             // 更新所有状态指示点
             updateTaskIndicator(indicatorLoop, false)

@@ -1,4 +1,4 @@
-package com.jdhelper.ui.screens.history
+package com.jdhelper.app.ui.screens.history
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,10 +14,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.jdhelper.data.local.GiftClickHistory
-import com.jdhelper.service.ToastUtils
-import com.jdhelper.ui.theme.StatusGreen
-import com.jdhelper.ui.theme.StatusRed
+import com.jdhelper.app.data.local.GiftClickHistory
+import com.jdhelper.app.service.ToastUtils
+import com.jdhelper.app.ui.theme.StatusGreen
+import com.jdhelper.app.ui.theme.StatusRed
 import java.text.SimpleDateFormat
 import java.util.*
 

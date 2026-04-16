@@ -1,7 +1,5 @@
-package com.jdhelper.service
+package com.jdhelper.app.service
 
-import android.app.Activity
-import android.app.Application
 import android.content.Context
 import android.graphics.PixelFormat
 import android.os.Build
@@ -10,9 +8,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
 import android.widget.TextView
-import android.widget.Toast as SystemToast
 import com.jdhelper.R
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.widget.Toast as SystemToast
 
 /**
  * 自定义Toast工具类，使用WindowManager实现

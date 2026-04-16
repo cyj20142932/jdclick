@@ -1,4 +1,4 @@
-package com.jdhelper.data.local
+package com.jdhelper.app.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

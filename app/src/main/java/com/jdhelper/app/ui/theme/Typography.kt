@@ -1,4 +1,4 @@
-package com.jdhelper.ui.theme
+package com.jdhelper.app.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

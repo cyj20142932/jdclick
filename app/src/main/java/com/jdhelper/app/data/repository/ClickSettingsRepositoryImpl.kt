@@ -1,10 +1,10 @@
-package com.jdhelper.data.repository
+package com.jdhelper.app.data.repository
 
 import android.content.Context
-import com.jdhelper.data.local.ClickSettings
-import com.jdhelper.data.local.ClickSettingsDao
-import com.jdhelper.data.local.TimeSource
-import com.jdhelper.domain.repository.ClickSettingsRepository
+import com.jdhelper.app.data.local.ClickSettings
+import com.jdhelper.app.data.local.ClickSettingsDao
+import com.jdhelper.app.data.local.TimeSource
+import com.jdhelper.app.domain.repository.ClickSettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
