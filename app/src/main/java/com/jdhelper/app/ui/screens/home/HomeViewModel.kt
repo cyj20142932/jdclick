@@ -96,6 +96,10 @@ class HomeViewModel @Inject constructor(
         checkAllPermissions()
         // 启动定时器，定期刷新服务状态
         startStatusRefreshTimer()
+        // 进入首页自动同步时间
+        viewModelScope.launch {
+            syncNtpTime()
+        }
     }
 
     private fun startStatusRefreshTimer() {
