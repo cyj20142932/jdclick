@@ -70,9 +70,9 @@ class HomeViewModel @Inject constructor(
     val millisecondDigits: StateFlow<Int> = clickSettingsRepository.getMillisecondDigits()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
 
-    // 时间源状态
+    // 时间源状态 - 使用 Eagerly 保持最新值，不会在没有订阅者时退回默认值
     val timeSource: StateFlow<TimeSource> = clickSettingsRepository.getTimeSource()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TimeSource.NTP)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, TimeSource.NTP)
 
     // 京东时间偏移
     private val _jdOffset = MutableStateFlow("--ms")
@@ -126,7 +126,7 @@ class HomeViewModel @Inject constructor(
             )
             val isAccessibilityEnabled = enabledServices.any {
                 it.resolveInfo.serviceInfo.packageName == context.packageName &&
-                        it.resolveInfo.serviceInfo.name == "com.jdhelper.service.AccessibilityClickService"
+                        it.resolveInfo.serviceInfo.name == "com.jdhelper.app.service.AccessibilityClickService"
             }
             _uiState.update { it.copy(isAccessibilityEnabled = isAccessibilityEnabled) }
             LogConsole.d(TAG, "无障碍服务状态: $isAccessibilityEnabled")
@@ -157,7 +157,7 @@ class HomeViewModel @Inject constructor(
         )
         val isAccessibilityEnabled = enabledServices.any {
             it.resolveInfo.serviceInfo.packageName == context.packageName &&
-                    it.resolveInfo.serviceInfo.name == "com.jdhelper.service.AccessibilityClickService"
+                    it.resolveInfo.serviceInfo.name == "com.jdhelper.app.service.AccessibilityClickService"
         }
 
         // 检查悬浮窗是否显示
