@@ -13,6 +13,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Inject
 import javax.inject.Singleton
 
 @Module
@@ -34,13 +35,13 @@ object ServiceModule {
     ): TimeService {
         return DefaultTimeService(ntpTimeService, jdTimeService, clickSettingsRepository)
     }
-
-    @Provides
-    @Singleton
-    fun provideLogConsoleInitializer(logRepository: LogRepository): LogConsoleInitializer {
-        LogConsole.setRepository(logRepository)
-        return LogConsoleInitializer()
-    }
 }
 
-class LogConsoleInitializer
+@Singleton
+class LogConsoleInitializer @Inject constructor(
+    private val logRepository: LogRepository
+) {
+    init {
+        LogConsole.setRepository(logRepository)
+    }
+}
