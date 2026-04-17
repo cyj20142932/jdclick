@@ -583,6 +583,9 @@ class FloatingMenuService : Service() {
                         ToastUtils.show(this@FloatingMenuService, "时间同步失败，使用本地时间")
                     }
 
+                    // 同步后更新状态显示
+                    updateNtpStatusDisplay()
+
                     // 2. 直接启动悬浮时钟
                     FloatingService.startService(this@FloatingMenuService)
 
@@ -669,6 +672,9 @@ class FloatingMenuService : Service() {
                     if (!synced) {
                         ToastUtils.show(this@FloatingMenuService, "时间未校准，使用本地时间")
                     }
+
+                    // 同步后更新状态显示
+                    updateNtpStatusDisplay()
 
                     // 3. 直接启动悬浮时钟（而不是refresh，因为前面已经stop了）
                     FloatingService.startService(this@FloatingMenuService)
