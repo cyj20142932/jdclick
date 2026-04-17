@@ -108,7 +108,8 @@ fun HistoryItemCard(
     val localTimeStr = remember(item.localClickTime) { timeFormat.format(Date(item.localClickTime)) }
 
     // 根据时间源动态显示标签，处理null和空字符串情况
-    val itemTimeSource = item.timeSource?.uppercase()?.trim() ?: ""
+    // 空/NULL时默认显示"NTP"
+    val itemTimeSource = item.timeSource?.uppercase()?.trim() ?: "NTP"
     val isJdSource = itemTimeSource == "JD"
     val serverTimeLabel = if (isJdSource) "京东" else "NTP"
     val serverTimeColor = if (isJdSource) Color(0xFF67C23A) else Color(0xFF409EFF)
@@ -195,7 +196,7 @@ fun HistoryItemCard(
                     // 时间源显示 - 使用已有的itemTimeSource变量
                     val timeSourceColor = if (isJdSource) Color(0xFF67C23A) else Color(0xFF409EFF)
                     Text(
-                        "时间源: ${item.timeSource ?: "NTP"}",
+                        "时间源: $itemTimeSource",
                         style = MaterialTheme.typography.bodySmall,
                         color = timeSourceColor
                     )
