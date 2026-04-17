@@ -136,7 +136,9 @@ class JdTimeService @Inject constructor() {
      * 获取当前京东时间
      */
     fun getCurrentJdTime(): Long {
-        return System.currentTimeMillis() + sharedJdOffset
+        // timeDiff = +338ms 表示本地时间比京东时间快338ms
+        // 所以京东时间 = 本地时间 - 338ms
+        return System.currentTimeMillis() - sharedJdOffset
     }
 
     /**
