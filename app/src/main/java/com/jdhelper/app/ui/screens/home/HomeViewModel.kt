@@ -382,24 +382,18 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun updateTimeOffset() {
-        val currentSource = timeService.getCurrentTimeSource()
-        if (currentSource == TimeSource.JD) {
-            // 京东时间源
-            if (jdTimeService.isSynced()) {
-                val offset = jdTimeService.getJdOffset()
-                _ntpOffset.value = if (offset >= 0) "+${offset}ms" else "${offset}ms"
-                _jdOffset.value = _ntpOffset.value  // 保持同步
-            } else {
-                _ntpOffset.value = "--ms"
+        // 使用统一的 timeService 接口获取时间偏移
+        if (timeService.isSynced()) {
+            val offset = timeService.getTimeOffset()
+            val offsetText = if (offset >= 0) "+${offset}ms" else "${offset}ms"
+            _ntpOffset.value = offsetText
+
+            val currentSource = timeService.getCurrentTimeSource()
+            if (currentSource == TimeSource.JD) {
+                _jdOffset.value = offsetText
             }
         } else {
-            // NTP时间源
-            if (ntpTimeService.isSynced()) {
-                val offset = ntpTimeService.getTimeOffset()
-                _ntpOffset.value = if (offset >= 0) "+${offset}ms" else "${offset}ms"
-            } else {
-                _ntpOffset.value = "--ms"
-            }
+            _ntpOffset.value = "--ms"
         }
     }
 
