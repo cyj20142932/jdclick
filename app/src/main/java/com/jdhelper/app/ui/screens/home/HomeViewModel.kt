@@ -16,7 +16,6 @@ import com.jdhelper.app.service.JdTimeService
 import com.jdhelper.app.service.FloatingStateManager
 import com.jdhelper.app.data.local.TimeSource
 import com.jdhelper.app.domain.repository.ClickSettingsRepository
-import com.jdhelper.app.service.NtpTimeService
 import com.jdhelper.app.ui.screens.time.TimeManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -50,7 +49,6 @@ data class HomeUiState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val ntpTimeService: NtpTimeService,
     private val jdTimeService: JdTimeService,
     private val timeService: TimeService,
     private val timeManager: TimeManager,
@@ -72,7 +70,7 @@ class HomeViewModel @Inject constructor(
 
     // 时间源状态 - 使用 Eagerly 保持最新值，不会在没有订阅者时退回默认值
     val timeSource: StateFlow<TimeSource> = clickSettingsRepository.getTimeSource()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, TimeSource.NTP)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, TimeSource.JD)
 
     // 京东时间偏移
     private val _jdOffset = MutableStateFlow("--ms")
@@ -246,51 +244,7 @@ class HomeViewModel @Inject constructor(
         return success
     }
 
-    /**
-     * NTP时间同步（内部方法）
-     */
-    private suspend fun syncNtpTimeInternal(): Boolean {
-        LogConsole.d(TAG, "开始同步NTP时间...")
-        _uiState.update { it.copy(isNtpSyncing = true) }
 
-        try {
-            val success = ntpTimeService.syncTime()
-
-            if (success) {
-                val syncTime = ntpTimeService.getLastSyncTime()
-                val format = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-                val timeText = format.format(java.util.Date(syncTime))
-
-                // 计算时间偏差
-                val offset = ntpTimeService.getTimeOffset()
-                val offsetText = if (offset >= 0) "+${offset}ms" else "${offset}ms"
-
-                _uiState.update { it.copy(ntpLastSyncTime = timeText, ntpTimeOffset = offsetText, isNtpSyncing = false) }
-                // 更新偏差显示
-                _ntpOffset.value = offsetText
-                LogConsole.d(TAG, "NTP同步成功: $timeText, 偏差: $offsetText")
-            } else {
-                _uiState.update { it.copy(ntpLastSyncTime = "同步失败", isNtpSyncing = false) }
-                LogConsole.w(TAG, "NTP同步失败")
-            }
-
-            return success
-        } catch (e: Exception) {
-            LogConsole.e(TAG, "NTP同步异常", e)
-            _uiState.update { it.copy(ntpLastSyncTime = "同步失败", isNtpSyncing = false) }
-            return false
-        }
-    }
-
-    fun getNtpLastSyncTime(): String {
-        return if (ntpTimeService.isSynced()) {
-            val syncTime = ntpTimeService.getLastSyncTime()
-            val format = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-            format.format(java.util.Date(syncTime))
-        } else {
-            "从未同步"
-        }
-    }
 
     /**
      * 设置时间源
