@@ -25,7 +25,7 @@ fun TopStatusBar(
     ntpOffset: String = "",
     nextClickCountdown: String = "",
     millisecondDigits: Int = 1,
-    timeSource: TimeSource = TimeSource.NTP,
+    timeSource: TimeSource = TimeSource.JD,
     jdOffset: String = "",
     modifier: Modifier = Modifier
 ) {
@@ -54,7 +54,7 @@ fun TopStatusBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // NTP时间
+            // 时间显示
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -69,11 +69,9 @@ fun TopStatusBar(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     // 根据时间源显示对应偏移
                     val offsetDisplay = when (timeSource) {
-                        TimeSource.NTP -> ntpOffset
                         TimeSource.JD -> jdOffset
                     }
                     val sourceLabel = when (timeSource) {
-                        TimeSource.NTP -> "NTP"
                         TimeSource.JD -> "JD"
                     }
 
