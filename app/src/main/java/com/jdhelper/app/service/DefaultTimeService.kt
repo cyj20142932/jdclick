@@ -2,7 +2,6 @@ package com.jdhelper.app.service
 
 import com.jdhelper.app.data.local.TimeSource
 import com.jdhelper.app.domain.repository.ClickSettingsRepository
-import com.jdhelper.app.service.NtpTimeService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -14,11 +13,10 @@ private const val TAG = "DefaultTimeService"
 
 /**
  * 默认时间服务实现
- * 根据 TimeSource 路由到 NTP 或京东时间服务
+ * 根据 TimeSource 路由到京东时间服务
  */
 @Singleton
 class DefaultTimeService @Inject constructor(
-    private val ntpTimeService: NtpTimeService,
     private val jdTimeService: JdTimeService,
     private val clickSettingsRepository: ClickSettingsRepository
 ) : TimeService {
@@ -27,7 +25,7 @@ class DefaultTimeService @Inject constructor(
 
     // 缓存当前时间源，避免每次都从数据库读取
     @Volatile
-    private var cachedTimeSource: TimeSource = TimeSource.NTP
+    private var cachedTimeSource: TimeSource = TimeSource.JD
 
     // 缓存延迟补偿值
     @Volatile
@@ -53,7 +51,6 @@ class DefaultTimeService @Inject constructor(
     override fun getCurrentTime(): Long {
         val source = cachedTimeSource
         val baseTime = when (source) {
-            TimeSource.NTP -> ntpTimeService.getCurrentTime()
             TimeSource.JD -> jdTimeService.getCurrentJdTime()
         }
         // 加上延迟补偿
@@ -63,7 +60,6 @@ class DefaultTimeService @Inject constructor(
     override fun getTimeOffset(): Long {
         val source = cachedTimeSource
         return when (source) {
-            TimeSource.NTP -> ntpTimeService.getTimeOffset()
             TimeSource.JD -> jdTimeService.getJdOffset()
         }
     }
@@ -79,7 +75,6 @@ class DefaultTimeService @Inject constructor(
         val source = cachedTimeSource
         LogConsole.d(TAG, "syncTime: 当前时间源 = $source")
         return when (source) {
-            TimeSource.NTP -> ntpTimeService.syncTime()
             TimeSource.JD -> jdTimeService.syncJdTime()
         }
     }
@@ -91,7 +86,6 @@ class DefaultTimeService @Inject constructor(
     override fun isSynced(): Boolean {
         val source = cachedTimeSource
         return when (source) {
-            TimeSource.NTP -> ntpTimeService.isSynced()
             TimeSource.JD -> jdTimeService.isSynced()
         }
     }
