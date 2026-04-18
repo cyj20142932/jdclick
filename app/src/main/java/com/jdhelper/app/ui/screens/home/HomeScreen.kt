@@ -202,46 +202,21 @@ fun HomeScreen(
                     .padding(bottom = 12.dp),
                 colors = CardDefaults.cardColors(containerColor = DarkSurface)
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(16.dp)
                 ) {
-                    Column {
-                        Text(
-                            text = "时间源",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = Color.White
-                        )
-                        Text(
-                            text = when (timeSource) {
-                                TimeSource.NTP -> "阿里云NTP时间"
-                                TimeSource.JD -> "京东服务器时间"
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                    }
-
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            "NTP",
-                            color = if (timeSource == TimeSource.NTP) Color.White else Color.Gray
-                        )
-                        Switch(
-                            checked = timeSource == TimeSource.JD,
-                            onCheckedChange = { isJd ->
-                                viewModel.setTimeSource(if (isJd) TimeSource.JD else TimeSource.NTP)
-                            },
-                            colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF67C23A))
-                        )
-                        Text(
-                            "JD",
-                            color = if (timeSource == TimeSource.JD) Color.White else Color.Gray
-                        )
-                    }
+                    Text(
+                        text = "时间源",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                    Text(
+                        text = "京东服务器时间",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
                 }
             }
 
