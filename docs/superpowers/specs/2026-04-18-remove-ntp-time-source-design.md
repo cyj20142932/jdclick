@@ -57,6 +57,9 @@
 #### 2.12 GiftClickHistory.kt
 - 默认值从 "NTP" 改为 "JD"
 
+### 2.13 build.gradle.kts
+- 删除 `commons-net:commons-net:3.11.1` 依赖
+
 ## 影响范围
 - 悬浮窗时钟：不再显示NTP相关状态
 - 时间同步页面：移除NTP相关功能
