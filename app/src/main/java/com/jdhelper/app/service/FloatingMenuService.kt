@@ -586,8 +586,10 @@ class FloatingMenuService : Service() {
                     // 同步后更新状态显示
                     updateNtpStatusDisplay()
 
-                    // 2. 直接启动悬浮时钟
-                    FloatingService.startService(this@FloatingMenuService)
+                    // 2. 复用已打开的悬浮时钟，如果没有打开则启动
+                    if (!FloatingService.isRunning()) {
+                        FloatingService.startService(this@FloatingMenuService)
+                    }
 
                     // 3. 启动礼物点击逻辑
                     giftJob = launch {
@@ -628,7 +630,11 @@ class FloatingMenuService : Service() {
         floatingView?.findViewById<ImageButton>(R.id.btn_play)?.setOnClickListener {
             // 先停止现有任务
             timedClickManager.stop()
-            FloatingService.stopService(this)
+            // 如果没有运行悬浮时钟，则记录需要启动
+            val shouldStartClock = !FloatingService.isRunning()
+            if (shouldStartClock) {
+                FloatingService.stopService(this)
+            }
             // 更新播放按钮图标
             updatePlayButtonState()
 
@@ -676,8 +682,10 @@ class FloatingMenuService : Service() {
                     // 同步后更新状态显示
                     updateNtpStatusDisplay()
 
-                    // 3. 直接启动悬浮时钟（而不是refresh，因为前面已经stop了）
-                    FloatingService.startService(this@FloatingMenuService)
+                    // 3. 复用已打开的悬浮时钟，如果没有打开则启动
+                    if (shouldStartClock) {
+                        FloatingService.startService(this@FloatingMenuService)
+                    }
 
                     // 4. 更新播放按钮图标为暂停状态
                     updatePlayButtonState()
