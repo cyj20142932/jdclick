@@ -74,6 +74,8 @@ class DefaultTimeService @Inject constructor(
     }
 
     override suspend fun syncTime(): Boolean {
+        // 使用缓存的时间源，但在切换时间源后确保已同步
+        // 由于 cachedTimeSource 通过 Flow 收集更新，切换时间源时会自动更新
         val source = cachedTimeSource
         LogConsole.d(TAG, "syncTime: 当前时间源 = $source")
         return when (source) {

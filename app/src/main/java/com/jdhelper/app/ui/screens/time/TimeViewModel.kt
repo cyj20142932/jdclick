@@ -140,9 +140,11 @@ class TimeManager @Inject constructor(
      */
     suspend fun switchTimeSource(source: TimeSource): Boolean {
         LogConsole.d(TAG, "切换时间源到: $source")
+
+        // 先保存时间源设置
         clickSettingsRepository.setTimeSource(source)
 
-        // 切换时间源后进行同步
+        // 切换时间源后进行同步（timeService会根据当前设置的时间源同步）
         return syncTime()
     }
 
