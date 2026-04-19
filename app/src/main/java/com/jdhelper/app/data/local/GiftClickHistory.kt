@@ -15,5 +15,5 @@ data class GiftClickHistory(
     val actualDiff: Long, // 实际偏差 = ntpClickTime - targetTime
     val success: Boolean? = null, // 是否成功抢购 null=未设置, true=成功, false=失败
     val createTime: Long = System.currentTimeMillis(),
-    val timeSource: String = "NTP"  // 新增: "NTP" 或 "JD"
+    val timeSource: String = "JD"  // 新增: "NTP" 或 "JD"
 )

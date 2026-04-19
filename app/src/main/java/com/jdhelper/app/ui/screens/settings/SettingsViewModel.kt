@@ -1,16 +1,15 @@
 package com.jdhelper.app.ui.screens.settings
 
-import android.app.Application
+import android.view.accessibility.AccessibilityManager
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
-import android.util.Log
-import com.jdhelper.app.service.LogConsole
-import android.view.accessibility.AccessibilityManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.jdhelper.app.data.local.GiftClickHistoryDao
 import com.jdhelper.app.domain.repository.ClickSettingsRepository
 import com.jdhelper.app.service.AccessibilityClickService
+import com.jdhelper.app.service.JdTimeService
+import com.jdhelper.app.service.LogConsole
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,7 +23,6 @@ import javax.inject.Inject
 private const val TAG = "SettingsViewModel"
 
 data class SettingsUiState(
-    val ntpServer: String = "ntp.aliyun.com",
     val lastSyncTime: String = "从未同步",
     val isSyncing: Boolean = false,
     val syncError: String? = null,
@@ -35,6 +33,7 @@ data class SettingsUiState(
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
+    private val jdTimeService: JdTimeService,
     private val clickSettingsRepository: ClickSettingsRepository,
     private val giftClickHistoryDao: GiftClickHistoryDao,
     @ApplicationContext private val context: Context
@@ -58,49 +57,31 @@ class SettingsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-    init {
-        // 初始化当前服务器
-        _uiState.update { it.copy(ntpServer = ntpTimeService.getCurrentServer()) }
-    }
-
-    fun getNtpServer(): String = ntpTimeService.getCurrentServer()
-
     fun getLastSyncTimeText(): String = _uiState.value.lastSyncTime
 
     fun isSyncing(): Boolean = _uiState.value.isSyncing
 
-    fun getLastSyncTime(): Long = ntpTimeService.getLastSyncTime()
-
-    fun isNtpSynced(): Boolean = ntpTimeService.isSynced()
-
-    fun setNtpServer(server: String) {
-        ntpTimeService.setServer(server)
-        _uiState.update { it.copy(ntpServer = server) }
-        LogConsole.d(TAG, "切换NTP服务器: $server")
-    }
+    fun isJdSynced(): Boolean = jdTimeService.isSynced()
 
     suspend fun syncTime(): Boolean {
-        LogConsole.d(TAG, "开始同步NTP时间...")
+        LogConsole.d(TAG, "开始同步京东时间...")
         _uiState.update { it.copy(isSyncing = true, syncError = null) }
 
         try {
-            val success = ntpTimeService.syncTime()
-            LogConsole.d(TAG, "NTP同步结果: $success")
+            val success = jdTimeService.syncJdTime()
+            LogConsole.d(TAG, "京东时间同步结果：$success")
 
             if (success) {
-                val syncTime = ntpTimeService.getLastSyncTime()
-                val format = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
-                val timeText = format.format(java.util.Date(syncTime))
-                _uiState.update { it.copy(lastSyncTime = timeText, isSyncing = false) }
-                LogConsole.d(TAG, "同步成功，时间: $timeText")
+                _uiState.update { it.copy(lastSyncTime = "已同步", isSyncing = false) }
+                LogConsole.d(TAG, "同步成功")
             } else {
                 _uiState.update { it.copy(lastSyncTime = "同步失败", isSyncing = false, syncError = "同步失败，请检查网络") }
-                LogConsole.w(TAG, "NTP同步失败")
+                LogConsole.w(TAG, "京东时间同步失败")
             }
 
             return success
         } catch (e: Exception) {
-            LogConsole.e(TAG, "NTP同步异常", e)
+            LogConsole.e(TAG, "京东时间同步异常", e)
             _uiState.update { it.copy(lastSyncTime = "同步失败", isSyncing = false, syncError = e.message) }
             return false
         }
@@ -116,12 +97,12 @@ class SettingsViewModel @Inject constructor(
             val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(
                 AccessibilityServiceInfo.FEEDBACK_GENERIC
             )
-            val isAccessibilityEnabled = enabledServices.any {
-                it.resolveInfo.serviceInfo.packageName == context.packageName &&
-                        it.resolveInfo.serviceInfo.name == "com.jdhelper.service.AccessibilityClickService"
+            val isAccessibilityEnabled = enabledServices.any { serviceInfo ->
+                serviceInfo.resolveInfo.serviceInfo.packageName == context.packageName &&
+                        serviceInfo.resolveInfo.serviceInfo.name == "com.jdhelper.service.AccessibilityClickService"
             }
             _uiState.update { it.copy(isAccessibilityEnabled = isAccessibilityEnabled) }
-            LogConsole.d(TAG, "无障碍服务状态: $isAccessibilityEnabled")
+            LogConsole.d(TAG, "无障碍服务状态：$isAccessibilityEnabled")
         } catch (e: Exception) {
             LogConsole.e(TAG, "检查无障碍服务状态失败", e)
             _uiState.update { it.copy(isAccessibilityEnabled = false) }
@@ -132,7 +113,7 @@ class SettingsViewModel @Inject constructor(
         try {
             val isOverlayEnabled = android.provider.Settings.canDrawOverlays(context)
             _uiState.update { it.copy(isOverlayEnabled = isOverlayEnabled) }
-            LogConsole.d(TAG, "悬浮窗权限状态: $isOverlayEnabled")
+            LogConsole.d(TAG, "悬浮窗权限状态：$isOverlayEnabled")
         } catch (e: Exception) {
             LogConsole.e(TAG, "检查悬浮窗权限失败", e)
             _uiState.update { it.copy(isOverlayEnabled = false) }
@@ -156,7 +137,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     suspend fun setClickDuration(duration: Long) {
-        val validDuration = duration.coerceAtLeast(50) // 最小50ms
+        val validDuration = duration.coerceAtLeast(50) // 最小 50ms
         clickSettingsRepository.setClickDuration(validDuration)
         // 同时更新 AccessibilityClickService 的静态变量
         AccessibilityClickService.clickDuration = validDuration

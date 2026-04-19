@@ -36,7 +36,7 @@ class TimeManager @Inject constructor(
      * 当前使用的时间源 (NTP 或 JD)
      */
     val timeSource: StateFlow<TimeSource> = clickSettingsRepository.getTimeSource()
-        .stateIn(scope, SharingStarted.Eagerly, TimeSource.NTP)
+        .stateIn(scope, SharingStarted.Eagerly, TimeSource.JD)
 
     /**
      * 当前时间 - 每 10ms 更新一次

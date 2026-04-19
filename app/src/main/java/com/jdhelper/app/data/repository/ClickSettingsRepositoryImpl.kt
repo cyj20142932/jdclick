@@ -82,8 +82,8 @@ class ClickSettingsRepositoryImpl @Inject constructor(
 
     override fun getTimeSource(): Flow<TimeSource> {
         return clickSettingsDao.getTimeSource()
-            .map { it ?: TimeSource.NTP }
-            .stateIn(CoroutineScope(Dispatchers.Main), SharingStarted.Eagerly, TimeSource.NTP)
+            .map { it ?: TimeSource.JD }
+            .stateIn(CoroutineScope(Dispatchers.Main), SharingStarted.Eagerly, TimeSource.JD)
     }
 
     override suspend fun setTimeSource(source: TimeSource) {

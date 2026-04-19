@@ -138,7 +138,7 @@ class FloatingMenuService : Service() {
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
 
     // 时间源相关
-    private var currentTimeSource: TimeSource = TimeSource.NTP
+    private var currentTimeSource: TimeSource = TimeSource.JD
     private var lastJdSyncTime: Long = 0L
 
     @Suppress("DEPRECATION")

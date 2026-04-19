@@ -7,7 +7,6 @@ import com.jdhelper.app.service.LogConsole
 import com.jdhelper.app.service.TimeService
 import com.jdhelper.app.domain.repository.ClickSettingsRepository
 import com.jdhelper.app.domain.repository.LogRepository
-import com.jdhelper.app.service.NtpTimeService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,20 +19,14 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object ServiceModule {
 
-    @Provides
-    @Singleton
-    fun provideNtpTimeService(@ApplicationContext context: Context): NtpTimeService {
-        return NtpTimeService(context)
-    }
 
     @Provides
     @Singleton
     fun provideTimeService(
-        ntpTimeService: NtpTimeService,
         jdTimeService: com.jdhelper.app.service.JdTimeService,
         clickSettingsRepository: ClickSettingsRepository
     ): TimeService {
-        return DefaultTimeService(ntpTimeService, jdTimeService, clickSettingsRepository)
+        return DefaultTimeService(jdTimeService, clickSettingsRepository)
     }
 }
 

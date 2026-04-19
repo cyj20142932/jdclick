@@ -100,7 +100,6 @@ class FloatingService : Service() {
     private var floatingView: View? = null
     private var timeTextView: TextView? = null
     private var timeUpdateJob: Job? = null
-    private var ntpTimeService: NtpTimeService? = null
 
     @Inject
     lateinit var jdTimeService: JdTimeService
@@ -123,7 +122,7 @@ class FloatingService : Service() {
     private var onPositionCallback: ((Int, Int) -> Unit)? = null
 
     // 时间源相关
-    private var currentTimeSource: TimeSource = TimeSource.NTP
+    private var currentTimeSource: TimeSource = TimeSource.JD
     private var lastJdSyncTime: Long = 0L
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -132,11 +131,6 @@ class FloatingService : Service() {
         instance = this
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
-        ntpTimeService = NtpTimeService(this)
-        // 启动时自动同步 NTP 时间
-        CoroutineScope(Dispatchers.IO).launch {
-            ntpTimeService?.syncTime()
-        }
 
         // 读取时间源设置
         CoroutineScope(Dispatchers.IO).launch {
@@ -296,10 +290,6 @@ class FloatingService : Service() {
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     startActivity(intent)
                     return@setOnClickListener
-                }
-                // 更新NTP时间
-                CoroutineScope(Dispatchers.IO).launch {
-                    ntpTimeService?.syncTime()
                 }
             }
         }

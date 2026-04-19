@@ -15,5 +15,5 @@ data class ClickSettings(
     val delayMillis: Double = 0.0,
     val millisecondDigits: Int = 1, // 0=不显示毫秒, 1=显示1位, 3=显示3位
     val recordHistory: Boolean = false, // 是否记录点击历史
-    val timeSource: TimeSource = TimeSource.NTP  // 新增：时间源
+    val timeSource: TimeSource = TimeSource.JD  // 新增：时间源
 )
