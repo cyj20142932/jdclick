@@ -11,7 +11,6 @@ import androidx.lifecycle.viewModelScope
 import com.jdhelper.app.data.local.GiftClickHistoryDao
 import com.jdhelper.app.domain.repository.ClickSettingsRepository
 import com.jdhelper.app.service.AccessibilityClickService
-import com.jdhelper.app.service.NtpTimeService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +35,6 @@ data class SettingsUiState(
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val ntpTimeService: NtpTimeService,
     private val clickSettingsRepository: ClickSettingsRepository,
     private val giftClickHistoryDao: GiftClickHistoryDao,
     @ApplicationContext private val context: Context
@@ -66,8 +64,6 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun getNtpServer(): String = ntpTimeService.getCurrentServer()
-
-    fun getNtpServers(): List<String> = NtpTimeService.NTP_SERVERS
 
     fun getLastSyncTimeText(): String = _uiState.value.lastSyncTime
 
