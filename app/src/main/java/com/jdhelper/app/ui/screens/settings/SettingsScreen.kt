@@ -36,7 +36,6 @@ fun SettingsScreen(
     val scrollState = rememberScrollState()
     val uiState by viewModel.uiState.collectAsState()
 
-    var showServerDialog by remember { mutableStateOf(false) }
     var showDelayDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -71,48 +70,6 @@ fun SettingsScreen(
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
-    }
-
-    // NTP服务器选择对话框
-    if (showServerDialog) {
-        AlertDialog(
-            onDismissRequest = { showServerDialog = false },
-            title = { Text("选择NTP服务器") },
-            text = {
-                LazyColumn(
-                    modifier = Modifier.heightIn(max = 300.dp)
-                ) {
-                    items(viewModel.getNtpServers().size) { index ->
-                        val server = viewModel.getNtpServers()[index]
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    viewModel.setNtpServer(server)
-                                    showServerDialog = false
-                                }
-                                .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = server == uiState.ntpServer,
-                                onClick = {
-                                    viewModel.setNtpServer(server)
-                                    showServerDialog = false
-                                }
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(server)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showServerDialog = false }) {
-                    Text("取消")
-                }
-            }
-        )
     }
 
     // 延迟设置对话框
@@ -415,13 +372,6 @@ fun SettingsScreen(
 
             // 点击与时间设置
             SettingsSection(title = "点击与时间设置") {
-                SettingsItem(
-                    icon = Icons.Default.CloudSync,
-                    title = "NTP服务器",
-                    subtitle = uiState.ntpServer,
-                    onClick = { showServerDialog = true }
-                )
-
                 SettingsItem(
                     icon = Icons.Default.Timer,
                     title = "点击延迟",

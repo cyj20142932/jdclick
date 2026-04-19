@@ -1,5 +1,6 @@
 package com.jdhelper.app.ui.screens.settings
 
+import android.view.accessibility.AccessibilityManager
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -96,9 +97,9 @@ class SettingsViewModel @Inject constructor(
             val enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(
                 AccessibilityServiceInfo.FEEDBACK_GENERIC
             )
-            val isAccessibilityEnabled = enabledServices.any {
-                it.resolveInfo.serviceInfo.packageName == context.packageName &&
-                        it.resolveInfo.serviceInfo.name == "com.jdhelper.service.AccessibilityClickService"
+            val isAccessibilityEnabled = enabledServices.any { serviceInfo ->
+                serviceInfo.resolveInfo.serviceInfo.packageName == context.packageName &&
+                        serviceInfo.resolveInfo.serviceInfo.name == "com.jdhelper.service.AccessibilityClickService"
             }
             _uiState.update { it.copy(isAccessibilityEnabled = isAccessibilityEnabled) }
             LogConsole.d(TAG, "无障碍服务状态：$isAccessibilityEnabled")

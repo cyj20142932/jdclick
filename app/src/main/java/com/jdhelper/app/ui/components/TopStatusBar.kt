@@ -70,9 +70,11 @@ fun TopStatusBar(
                     // 根据时间源显示对应偏移
                     val offsetDisplay = when (timeSource) {
                         TimeSource.JD -> jdOffset
+                        else -> jdOffset
                     }
                     val sourceLabel = when (timeSource) {
                         TimeSource.JD -> "JD"
+                        else -> "JD"
                     }
 
                     if (millisecondDigits > 0) {

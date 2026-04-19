@@ -52,6 +52,7 @@ class DefaultTimeService @Inject constructor(
         val source = cachedTimeSource
         val baseTime = when (source) {
             TimeSource.JD -> jdTimeService.getCurrentJdTime()
+            else -> jdTimeService.getCurrentJdTime()
         }
         // 加上延迟补偿
         return baseTime + cachedDelayMillis.toLong()
@@ -61,6 +62,7 @@ class DefaultTimeService @Inject constructor(
         val source = cachedTimeSource
         return when (source) {
             TimeSource.JD -> jdTimeService.getJdOffset()
+            else -> jdTimeService.getJdOffset()
         }
     }
 
@@ -76,6 +78,7 @@ class DefaultTimeService @Inject constructor(
         LogConsole.d(TAG, "syncTime: 当前时间源 = $source")
         return when (source) {
             TimeSource.JD -> jdTimeService.syncJdTime()
+            else -> jdTimeService.syncJdTime()
         }
     }
 
@@ -87,6 +90,7 @@ class DefaultTimeService @Inject constructor(
         val source = cachedTimeSource
         return when (source) {
             TimeSource.JD -> jdTimeService.isSynced()
+            else -> jdTimeService.isSynced()
         }
     }
 
