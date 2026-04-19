@@ -119,8 +119,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
 
-    // NTP Time Sync
-    implementation("commons-net:commons-net:3.11.1")
 
     // OkHttp
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
