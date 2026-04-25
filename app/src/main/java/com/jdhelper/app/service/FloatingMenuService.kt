@@ -39,6 +39,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -156,6 +157,9 @@ class FloatingMenuService : Service() {
     private var currentTimeSource: TimeSource = TimeSource.JD
     private var lastJdSyncTime: Long = 0L
 
+    @Volatile
+    private var cachedRecordHistory: Boolean = true
+
     /** 送礼阶段配置（编译时参数化，后续可改为动态加载） */
     private val giftClickStages = listOf(
         GiftClickStage(
@@ -212,6 +216,17 @@ class FloatingMenuService : Service() {
                     LogConsole.d(TAG, "启动时同步京东时间...")
                     jdTimeService.syncJdTime()
                     lastJdSyncTime = now
+                }
+            }
+
+            // 缓存记录历史设置，避免每次写操作前读数据库
+            serviceIoScope.launch {
+                try {
+                    clickSettingsRepository.getRecordHistory().collect { enabled ->
+                        cachedRecordHistory = enabled
+                    }
+                } catch (e: Exception) {
+                    LogConsole.e(TAG, "读取记录设置失败", e)
                 }
             }
 
@@ -1080,8 +1095,7 @@ class FloatingMenuService : Service() {
         clickDelay: Double,
         actualDiff: Long,
     ) {
-        val shouldRecord = clickSettingsRepository.getRecordHistory().first()
-        if (!shouldRecord) return
+        if (!cachedRecordHistory) return
 
         val timeSource = clickSettingsRepository.getTimeSource().first()
         LogConsole.d(TAG, "保存历史记录: stage=$stage, timeSource=${timeSource.name}")
