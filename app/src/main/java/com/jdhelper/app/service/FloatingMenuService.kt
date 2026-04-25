@@ -642,28 +642,22 @@ class FloatingMenuService : Service() {
                             isGiftRunning = false
                             floatingStateManager.notifyTaskStateChanged(FloatingStateManager.TASK_TYPE_GIFT, false)
                             // 更新礼物按钮图标
-                            withContext(Dispatchers.Main) {
-                                updateGiftButtonState()
-                                // 更新状态指示点
-                                updateTaskIndicator(indicatorGift, false)
-                                updateOverallStatus()
-                            }
+                            updateGiftButtonState()
+                            // 更新状态指示点
+                            updateTaskIndicator(indicatorGift, false)
+                            updateOverallStatus()
                             FloatingService.stopService(this@FloatingMenuService)
                         } catch (e: Exception) {
                             LogConsole.e(TAG, "礼物任务异常", e)
                             isGiftRunning = false
                             floatingStateManager.notifyTaskStateChanged(FloatingStateManager.TASK_TYPE_GIFT, false)
                             // 更新礼物按钮图标
-                            withContext(Dispatchers.Main) {
-                                updateGiftButtonState()
-                                // 更新状态指示点
-                                updateTaskIndicator(indicatorGift, false)
-                                updateOverallStatus()
-                            }
+                            updateGiftButtonState()
+                            // 更新状态指示点
+                            updateTaskIndicator(indicatorGift, false)
+                            updateOverallStatus()
                             FloatingService.stopService(this@FloatingMenuService)
-                            withContext(Dispatchers.Main) {
-                                ToastUtils.show(this@FloatingMenuService, "礼物任务终止: ${e.message}")
-                            }
+                            ToastUtils.show(this@FloatingMenuService, "礼物任务终止: ${e.message}")
                         }
                     }
                 }
@@ -945,9 +939,7 @@ class FloatingMenuService : Service() {
             delay(stage.delayAfterClickMs)
         }
 
-        withContext(Dispatchers.Main) {
-            ToastUtils.show(this@FloatingMenuService, "礼物任务已完成")
-        }
+        ToastUtils.show(this@FloatingMenuService, "礼物任务已完成")
         LogConsole.d(TAG, "=== 礼物工作流成功完成 ===")
     }
 
@@ -977,15 +969,11 @@ class FloatingMenuService : Service() {
             AccessibilityClickService.getInstance()?.findButtonByKeywords(keywords)
         } ?: run {
             LogConsole.w(TAG, "阶段 $stageIndex 未找到按钮")
-            withContext(Dispatchers.Main) {
-                ToastUtils.show(this@FloatingMenuService, "未找到: 阶段${stageIndex}")
-            }
+            ToastUtils.show(this@FloatingMenuService, "未找到: 阶段${stageIndex}")
             return false
         }
 
-        withContext(Dispatchers.Main) {
-            ToastUtils.show(this@FloatingMenuService, "找到${stageIndex}阶段按钮，等待整分点击")
-        }
+        ToastUtils.show(this@FloatingMenuService, "找到${stageIndex}阶段按钮，等待整分点击")
 
         delay(500)
 
@@ -1078,9 +1066,7 @@ class FloatingMenuService : Service() {
 
         // 超时未找到
         LogConsole.w(TAG, "阶段 $stageIndex 超时未找到按钮")
-        withContext(Dispatchers.Main) {
-            ToastUtils.show(this@FloatingMenuService, "未找到: 阶段${stageIndex}")
-        }
+        ToastUtils.show(this@FloatingMenuService, "未找到: 阶段${stageIndex}")
         return false
     }
 
