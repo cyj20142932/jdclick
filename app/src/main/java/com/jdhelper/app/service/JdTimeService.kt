@@ -1,5 +1,6 @@
 package com.jdhelper.app.service
 
+import android.os.SystemClock
 import android.util.Log
 import com.jdhelper.app.service.LogConsole
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +22,10 @@ class JdTimeService @Inject constructor() {
         const val REQUEST_TIMEOUT = 2000L
 
         @Volatile
-        private var sharedJdOffset: Long = 0L  // 京东时间差（本地时间 - 京东时间）
+        private var elapsedAtServer: Long = 0L  // SystemClock.elapsedRealtime() 在服务器处理请求的时刻
+
+        @Volatile
+        private var serverTime: Long = 0L       // 京东服务器时间（毫秒时间戳）
 
         @Volatile
         private var hasSyncedAtLeastOnce: Boolean = false  // 是否曾经成功同步过
@@ -34,12 +38,17 @@ class JdTimeService @Inject constructor() {
         .readTimeout(REQUEST_TIMEOUT, TimeUnit.MILLISECONDS)
         .build()
 
+    private data class JdTimeSyncData(
+        val serverTime: Long,
+        val elapsedAtServer: Long,
+    )
+
     /**
      * 获取京东时间差
      * @return 时间差（毫秒），正值表示本地时间比京东服务器时间快
      */
     suspend fun syncJdTime(): Boolean = withContext(Dispatchers.IO) {
-        val now = System.currentTimeMillis()
+        val now = SystemClock.elapsedRealtime()
         if (now - lastSyncAttempt.get() < 5000) {
             LogConsole.d(TAG, "5秒内已同步过，跳过")
             return@withContext hasSyncedAtLeastOnce
@@ -50,9 +59,10 @@ class JdTimeService @Inject constructor() {
             try {
                 val result = requestJdTime()
                 if (result != null) {
-                    sharedJdOffset = result
+                    elapsedAtServer = result.elapsedAtServer
+                    serverTime = result.serverTime
                     hasSyncedAtLeastOnce = true
-                    LogConsole.d(TAG, "京东时间同步成功: offset=${result}ms")
+                    LogConsole.d(TAG, "京东时间同步成功")
                     return@withContext true
                 }
             } catch (e: Exception) {
@@ -67,8 +77,9 @@ class JdTimeService @Inject constructor() {
      * 请求京东服务器时间
      * 从 x-api-request-id 响应头获取精确到毫秒的时间戳
      * 格式：通过 "-" 分割后取最后一位
+     * 使用 SystemClock.elapsedRealtime() 计算网络延迟，避免系统时间跳变的影响
      */
-    private fun requestJdTime(): Long? {
+    private fun requestJdTime(): JdTimeSyncData? {
         val request = Request.Builder()
             .url(JD_API_URL)
             .header("User-Agent", "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36")
@@ -76,11 +87,13 @@ class JdTimeService @Inject constructor() {
             .header("Cookie", "wskey=whatever")
             .build()
 
-        val requestTime = System.currentTimeMillis()
+        val requestElapsed = SystemClock.elapsedRealtime()
+        val requestWall = System.currentTimeMillis()
 
         return try {
             val response = client.newCall(request).execute()
-            val responseTime = System.currentTimeMillis()
+            val responseElapsed = SystemClock.elapsedRealtime()
+            val responseWall = System.currentTimeMillis()
 
             if (!response.isSuccessful) {
                 LogConsole.w(TAG, "请求失败: ${response.code}")
@@ -116,25 +129,20 @@ class JdTimeService @Inject constructor() {
                 serverTimestamp * 1000  // 秒级转换为毫秒
             }
 
-            // 计算网络延迟（往返时间 / 2）
-            val roundTripTime = responseTime - requestTime
-            val networkDelay = roundTripTime / 2
+            // 使用单调时钟计算网络延迟（往返时间 / 2），不受系统时间跳变影响
+            val roundTripElapsed = responseElapsed - requestElapsed
+            val networkDelay = roundTripElapsed / 2
 
-            // 计算服务器时间的本地等价时刻
-            val localTimeAtServer = requestTime + networkDelay
-
-            // 时间差 = 本地时间 - 服务器时间
-            // 正值表示本地时间比京东服务器快
-            val timeDiff = localTimeAtServer - finalServerTime
+            // elapsedRealtime 在服务器处理请求时刻的估算值
+            val elapsedAtServer = requestElapsed + networkDelay
 
             LogConsole.d(TAG, "x-api-request-id: $requestId")
             LogConsole.d(TAG, "解析时间戳: $timestampStr -> $finalServerTime")
-            LogConsole.d(TAG, "请求时间: $requestTime, 响应时间: $responseTime")
-            LogConsole.d(TAG, "往返延迟: ${roundTripTime}ms, 单向延迟估算: ${networkDelay}ms")
-            LogConsole.d(TAG, "服务器时间: $finalServerTime, 本地等价时刻: $localTimeAtServer")
-            LogConsole.d(TAG, "时间差: ${timeDiff}ms")
+            LogConsole.d(TAG, "请求时间: $requestWall, 响应时间: $responseWall")
+            LogConsole.d(TAG, "往返延迟(elapsed): ${roundTripElapsed}ms, 单向延迟估算: ${networkDelay}ms")
+            LogConsole.d(TAG, "服务器时间: $finalServerTime, elapsedAtServer: $elapsedAtServer")
 
-            timeDiff
+            JdTimeSyncData(serverTime = finalServerTime, elapsedAtServer = elapsedAtServer)
         } catch (e: Exception) {
             LogConsole.e(TAG, "请求京东时间异常: ${e.message}")
             null
@@ -142,17 +150,20 @@ class JdTimeService @Inject constructor() {
     }
 
     /**
-     * 获取京东时间差
+     * 获取京东时间差（仅用于显示）
      */
-    fun getJdOffset(): Long = sharedJdOffset
+    fun getJdOffset(): Long {
+        if (!hasSyncedAtLeastOnce) return 0L
+        return System.currentTimeMillis() - getCurrentJdTime()
+    }
 
     /**
      * 获取当前京东时间
+     * 基于单调时钟计算，不受系统时间跳变影响
      */
     fun getCurrentJdTime(): Long {
-        // timeDiff = +338ms 表示本地时间比京东时间快338ms
-        // 所以京东时间 = 本地时间 - 338ms
-        return System.currentTimeMillis() - sharedJdOffset
+        if (!hasSyncedAtLeastOnce) return System.currentTimeMillis()
+        return SystemClock.elapsedRealtime() - elapsedAtServer + serverTime
     }
 
     /**

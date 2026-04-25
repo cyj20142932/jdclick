@@ -977,6 +977,8 @@ class FloatingMenuService : Service() {
 
         delay(500)
 
+        // 同步京东时间，确保整分对齐使用最新的时间差
+        timeService.syncTime()
         val ntpTime = timeService.getCurrentTime()
         val calendar = Calendar.getInstance().apply {
             timeInMillis = ntpTime
