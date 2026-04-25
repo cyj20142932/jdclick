@@ -30,6 +30,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -100,6 +102,8 @@ class FloatingService : Service() {
     private var floatingView: View? = null
     private var timeTextView: TextView? = null
     private var timeUpdateJob: Job? = null
+    private var cachedFormat: SimpleDateFormat = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault())
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     @Inject
     lateinit var jdTimeService: JdTimeService
@@ -133,7 +137,7 @@ class FloatingService : Service() {
         createNotificationChannel()
 
         // 读取时间源设置
-        CoroutineScope(Dispatchers.IO).launch {
+        serviceScope.launch {
             try {
                 clickSettingsRepository.getTimeSource().collect { source ->
                     currentTimeSource = source
@@ -145,7 +149,7 @@ class FloatingService : Service() {
         }
 
         // 启动时同步京东时间（如果上次同步超过5分钟或未同步）
-        CoroutineScope(Dispatchers.IO).launch {
+        serviceScope.launch {
             val now = System.currentTimeMillis()
             if (!jdTimeService.isSynced() || now - lastJdSyncTime > 5 * 60 * 1000) {
                 LogConsole.d(TAG, "启动时同步京东时间...")
@@ -159,6 +163,23 @@ class FloatingService : Service() {
             FloatingStateManager.getInstance()
         } catch (e: Exception) {
             LogConsole.e(TAG, "FloatingStateManager not initialized yet", e)
+        }
+
+        // 缓存毫秒显示位数设置，避免每次更新都读 SharedPreferences
+        serviceScope.launch {
+            try {
+                clickSettingsRepository.getMillisecondDigits().collect { digits ->
+                    val pattern = when (digits) {
+                        0 -> "HH:mm:ss"
+                        1 -> "HH:mm:ss.S"
+                        3 -> "HH:mm:ss.SSS"
+                        else -> "HH:mm:ss.S"
+                    }
+                    cachedFormat = SimpleDateFormat(pattern, Locale.getDefault())
+                }
+            } catch (e: Exception) {
+                LogConsole.e(TAG, "读取毫秒格式失败", e)
+            }
         }
     }
 
@@ -180,6 +201,7 @@ class FloatingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        serviceScope.cancel()
         hideFloatingWindow()
         timeUpdateJob?.cancel()
         instance = null
@@ -323,22 +345,7 @@ class FloatingService : Service() {
     }
 
     private fun updateTimeDisplay(displayTime: Long) {
-        val date = Date(displayTime)
-
-        // 读取毫秒格式设置
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val millisecondDigits = prefs.getInt(KEY_MILLISECOND_DIGITS, 1)
-
-        // 根据设置选择格式
-        val formatPattern = when (millisecondDigits) {
-            0 -> "HH:mm:ss"
-            1 -> "HH:mm:ss.S"
-            3 -> "HH:mm:ss.SSS"
-            else -> "HH:mm:ss.S"
-        }
-
-        val format = SimpleDateFormat(formatPattern, Locale.getDefault())
-        timeTextView?.text = format.format(date)
+        timeTextView?.text = cachedFormat.format(Date(displayTime))
     }
 
     fun setPositionMode(enabled: Boolean, callback: ((Int, Int) -> Unit)? = null) {
