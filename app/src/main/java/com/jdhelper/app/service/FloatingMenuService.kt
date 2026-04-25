@@ -36,6 +36,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
@@ -148,6 +150,7 @@ class FloatingMenuService : Service() {
 
     // 使用类级别的协程作用域，避免重复创建
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
+    private val serviceIoScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     // 时间源相关
     private var currentTimeSource: TimeSource = TimeSource.JD
@@ -191,7 +194,7 @@ class FloatingMenuService : Service() {
             registerReceiver(timeSyncReceiver, filter)
 
             // 读取时间源设置
-            CoroutineScope(Dispatchers.IO).launch {
+            serviceIoScope.launch {
                 try {
                     clickSettingsRepository.getTimeSource().collect { source ->
                         currentTimeSource = source
@@ -203,7 +206,7 @@ class FloatingMenuService : Service() {
             }
 
             // 启动时同步京东时间（如果上次同步超过5分钟或未同步）
-            CoroutineScope(Dispatchers.IO).launch {
+            serviceIoScope.launch {
                 val now = System.currentTimeMillis()
                 if (!jdTimeService.isSynced() || now - lastJdSyncTime > 5 * 60 * 1000) {
                     LogConsole.d(TAG, "启动时同步京东时间...")
@@ -349,6 +352,8 @@ class FloatingMenuService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        serviceScope.cancel()
+        serviceIoScope.cancel()
         hideFloatingMenu()
         instance = null
     }
@@ -725,7 +730,7 @@ class FloatingMenuService : Service() {
                     timedClickManager.setCallback(object : TimedClickManager.ClickCallback {
                         override fun onClickComplete(actualClickTime: Long, plannedClickTime: Long, delayMillis: Double, actualDiff: Long) {
                             // 记录历史
-                            CoroutineScope(Dispatchers.IO).launch {
+                            serviceIoScope.launch {
                                 val shouldRecord = clickSettingsRepository.getRecordHistory().first()
                                 if (shouldRecord) {
                                     val localClickTime = System.currentTimeMillis()
