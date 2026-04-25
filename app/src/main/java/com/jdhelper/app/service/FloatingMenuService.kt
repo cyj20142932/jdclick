@@ -23,7 +23,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.ImageButton
-import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import com.jdhelper.R
 import com.jdhelper.app.data.local.TimeSource
@@ -138,8 +137,6 @@ class FloatingMenuService : Service() {
 
     // 新增视图引用 - 状态指示
     private var statusIndicator: View? = null
-    private var textClockStatus: TextView? = null
-    private var textNtpOffset: TextView? = null
 
     // 状态指示点
     private var indicatorClock: View? = null
@@ -241,27 +238,13 @@ class FloatingMenuService : Service() {
     }
 
     /**
-     * 更新NTP状态显示
+     * 更新状态指示条颜色
      */
     private fun updateNtpStatusDisplay() {
-        // 使用统一的时间服务获取当前时间源的同步状态
-        val currentSource = timeService.getCurrentTimeSource()
-
-        if (timeService.isSynced()) {
-            val offset = timeService.getTimeOffset()
-            val offsetText = if (offset >= 0) "+${offset}ms" else "${offset}ms"
-            textNtpOffset?.text = offsetText
-            textClockStatus?.text = "时钟: ${currentSource.name}已同步"
-
-            // 状态指示条设为绿色
-            statusIndicator?.setBackgroundColor(Color.parseColor("#4CAF50"))
-        } else {
-            textNtpOffset?.text = "--ms"
-            textClockStatus?.text = "时钟: ${currentSource.name}未同步"
-
-            // 状态指示条设为灰色
-            statusIndicator?.setBackgroundColor(Color.parseColor("#888888"))
-        }
+        statusIndicator?.setBackgroundColor(
+            if (timeService.isSynced()) Color.parseColor("#4CAF50")
+            else Color.parseColor("#888888")
+        )
     }
 
     /**
@@ -417,8 +400,6 @@ class FloatingMenuService : Service() {
 
             // 获取新视图引用 - 状态指示
             statusIndicator = floatingView?.findViewById(R.id.status_indicator)
-            textClockStatus = floatingView?.findViewById(R.id.text_clock_status)
-            textNtpOffset = floatingView?.findViewById(R.id.text_ntp_offset)
 
             // 状态指示点
             indicatorClock = floatingView?.findViewById(R.id.indicator_clock)
