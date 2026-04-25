@@ -19,6 +19,7 @@ import com.jdhelper.app.domain.repository.ClickSettingsRepository
 import com.jdhelper.app.ui.screens.time.TimeManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,30 +87,17 @@ class HomeViewModel @Inject constructor(
     private val _nextClickCountdown = MutableStateFlow("")
     val nextClickCountdown: StateFlow<String> = _nextClickCountdown.asStateFlow()
 
+    private var countdownJob: Job? = null
+
     // NTP偏差状态 - 现在根据当前时间源显示偏移
     private val _ntpOffset = MutableStateFlow("--")
     val ntpOffset: StateFlow<String> = _ntpOffset.asStateFlow()
 
     init {
         checkAllPermissions()
-        // 启动定时器，定期刷新服务状态
-        startStatusRefreshTimer()
         // 进入首页自动同步时间
         viewModelScope.launch {
             syncNtpTime()
-        }
-    }
-
-    private fun startStatusRefreshTimer() {
-        viewModelScope.launch {
-            while (true) {
-                kotlinx.coroutines.delay(2000) // 每2秒刷新一次
-                try {
-                    checkServiceStatus(context)
-                } catch (e: Exception) {
-                    LogConsole.e(TAG, "刷新服务状态失败", e)
-                }
-            }
         }
     }
 
@@ -362,7 +350,8 @@ class HomeViewModel @Inject constructor(
      * @param timeMillis 下次点击的目标时间戳（毫秒）
      */
     fun setNextClickCountdown(timeMillis: Long) {
-        viewModelScope.launch {
+        countdownJob?.cancel()
+        countdownJob = viewModelScope.launch {
             while (true) {
                 try {
                     val remaining = timeMillis - System.currentTimeMillis()
