@@ -28,6 +28,8 @@ import com.jdhelper.R
 import com.jdhelper.app.data.local.TimeSource
 import com.jdhelper.app.data.local.GiftClickHistory
 import com.jdhelper.app.data.local.GiftClickHistoryDao
+import com.jdhelper.app.domain.model.GiftClickStage
+import com.jdhelper.app.domain.model.StageTiming
 import com.jdhelper.app.domain.repository.ClickSettingsRepository
 import com.jdhelper.app.ui.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
@@ -150,6 +152,22 @@ class FloatingMenuService : Service() {
     // 时间源相关
     private var currentTimeSource: TimeSource = TimeSource.JD
     private var lastJdSyncTime: Long = 0L
+
+    /** 送礼阶段配置（编译时参数化，后续可改为动态加载） */
+    private val giftClickStages = listOf(
+        GiftClickStage(
+            name = "一键送礼",
+            keywords = listOf("一键送礼", "送给"),
+            timing = StageTiming.Timed,
+            delayAfterClickMs = 1000,
+        ),
+        GiftClickStage(
+            name = "付款并赠送",
+            keywords = listOf("付款并赠送"),
+            timing = StageTiming.Poll(timeoutMs = 3000, intervalMs = 100),
+            delayAfterClickMs = 1000,
+        ),
+    )
 
     @Suppress("DEPRECATION")
     override fun onCreate() {
@@ -600,7 +618,7 @@ class FloatingMenuService : Service() {
                     // 3. 启动礼物点击逻辑
                     giftJob = launch {
                         try {
-                            runGiftClickTaskOnce()
+                            executeGiftWorkflow(giftClickStages)
                             isGiftRunning = false
                             floatingStateManager.notifyTaskStateChanged(FloatingStateManager.TASK_TYPE_GIFT, false)
                             // 更新礼物按钮图标
@@ -886,41 +904,71 @@ class FloatingMenuService : Service() {
     }
 
     /**
-     * 礼物整分点击任务
-     * 第一阶段：点击后立即查找"一键送礼"按钮，找到后等待整分时间点击
-     * 第二阶段：点击后每100ms查找"付款并赠送"，超时3秒退出
+     * 执行送礼工作流 — 按阶段列表依次执行
+     * 任一阶段失败（未找到按钮 / 超时）则终止后续
      */
-    private suspend fun CoroutineScope.runGiftClickTaskOnce() {
-        // 时间差 = JD_DELAY + DELAY + waitCorrection
-        LogConsole.d(TAG, "=== 礼物任务开始 ===")
+    private suspend fun CoroutineScope.executeGiftWorkflow(stages: List<GiftClickStage>) {
+        LogConsole.d(TAG, "=== 礼物工作流开始，共 ${stages.size} 个阶段 ===")
 
-        // ========== 第一阶段：立即查找一键送礼按钮 ==========
-        val firstButton = withContext(Dispatchers.IO) {
-            AccessibilityClickService.getInstance()?.findFirstStageButton()
-        }
+        val clickDelay = clickSettingsRepository.getDelayMillis().first().toLong()
 
-        if (firstButton == null) {
-            LogConsole.d(TAG, "未找到一键送礼按钮")
-            withContext(Dispatchers.Main) {
-                ToastUtils.show(this@FloatingMenuService, "未找到一键送礼按钮")
+        for ((index, stage) in stages.withIndex()) {
+            val stageIndex = index + 1
+            LogConsole.d(TAG, "阶段 $stageIndex/${stages.size}: ${stage.name}")
+
+            val success = executeStage(stage, clickDelay, stageIndex)
+            if (!success) {
+                LogConsole.w(TAG, "阶段 $stageIndex 失败: ${stage.name}，终止工作流")
+                return@executeGiftWorkflow
             }
-            return@runGiftClickTaskOnce
+
+            delay(stage.delayAfterClickMs)
         }
 
-        LogConsole.d(TAG, "第一阶段：找到一键送礼按钮 (${firstButton.x}, ${firstButton.y})，等待整分时间")
         withContext(Dispatchers.Main) {
-            ToastUtils.show(this@FloatingMenuService, "找到一键送礼，等待整分点击")
+            ToastUtils.show(this@FloatingMenuService, "礼物任务已完成")
+        }
+        LogConsole.d(TAG, "=== 礼物工作流成功完成 ===")
+    }
+
+    /**
+     * 执行单个阶段，返回是否成功
+     */
+    private suspend fun CoroutineScope.executeStage(
+        stage: GiftClickStage,
+        clickDelay: Long,
+        stageIndex: Int,
+    ): Boolean {
+        return when (stage.timing) {
+            is StageTiming.Timed -> executeTimedStage(stage.keywords, clickDelay, stageIndex)
+            is StageTiming.Poll -> executePollStage(stage.keywords, stage.timing, stageIndex)
+        }
+    }
+
+    /**
+     * 定时阶段 — 先找到按钮，再等待整分时间后点击
+     */
+    private suspend fun CoroutineScope.executeTimedStage(
+        keywords: List<String>,
+        clickDelay: Long,
+        stageIndex: Int,
+    ): Boolean {
+        val button = withContext(Dispatchers.IO) {
+            AccessibilityClickService.getInstance()?.findButtonByKeywords(keywords)
+        } ?: run {
+            LogConsole.w(TAG, "阶段 $stageIndex 未找到按钮")
+            withContext(Dispatchers.Main) {
+                ToastUtils.show(this@FloatingMenuService, "未找到: 阶段${stageIndex}")
+            }
+            return false
         }
 
-        // 短暂等待让界面渲染完成
+        withContext(Dispatchers.Main) {
+            ToastUtils.show(this@FloatingMenuService, "找到${stageIndex}阶段按钮，等待整分点击")
+        }
+
         delay(500)
 
-        // ========== 等待整分时间 - 精确到毫秒级 ==========
-        // 获取延迟设置
-        val clickDelay = clickSettingsRepository.getDelayMillis().first()
-        LogConsole.d(TAG, "礼物整分点击延迟: ${clickDelay}ms")
-
-        // 预先计算目标时间（下一个整分 + 延迟）
         val ntpTime = timeService.getCurrentTime()
         val calendar = Calendar.getInstance().apply {
             timeInMillis = ntpTime
@@ -932,120 +980,116 @@ class FloatingMenuService : Service() {
         val timeToTarget = targetTime - ntpTime
 
         if (timeToTarget <= 0) {
-            LogConsole.w(TAG, "时间已过，跳过本次点击")
-            return@runGiftClickTaskOnce
+            LogConsole.w(TAG, "阶段 $stageIndex 目标时间已过，跳过")
+            return false
         }
 
-        LogConsole.d(TAG, "等待整分点击: 目标时间=$targetTime, 剩余=${timeToTarget}ms")
-
-        // 优化等待策略：使用分段等待减少CPU占用
-        val spinThreshold = 50L // 精确等待阈值
+        // 分段等待：协程 delay + LockSupport.parkNanos 精确等待
+        val spinThreshold = 50L
         if (timeToTarget > spinThreshold) {
-            // 大部分时间使用协程delay，释放CPU
             delay(timeToTarget - spinThreshold)
         }
 
-        // 精确等待阶段：使用LockSupport.parkNanos减少CPU占用
         var currentTime = timeService.getCurrentTime()
         while (isActive && currentTime < targetTime) {
             val remaining = targetTime - currentTime
             if (remaining > 0) {
-                // 剩余时间越长，park时间越长；最后5ms使用自旋
                 val parkTime = if (remaining > 5) minOf(remaining, 10_000_000L) else 0
-                if (parkTime > 0) {
-                    LockSupport.parkNanos(parkTime)
-                }
+                if (parkTime > 0) LockSupport.parkNanos(parkTime)
             }
             currentTime = timeService.getCurrentTime()
         }
 
-        // 到达目标时间，执行点击
-        LogConsole.d(TAG, "到达目标时间，点击一键送礼")
+        // 执行点击
         withContext(Dispatchers.IO) {
-            AccessibilityClickService.getInstance()?.performGlobalClick(firstButton.x, firstButton.y)
+            AccessibilityClickService.getInstance()?.performGlobalClick(button.x, button.y)
         }
-        // 点击后获取实际时间
-        val firstStageClickTime = timeService.getCurrentTime()
-        val localClickTime = System.currentTimeMillis()
+        val clickTime = timeService.getCurrentTime()
 
-        // 记录第一阶段点击历史
-        val shouldRecord = clickSettingsRepository.getRecordHistory().first()
-        if (shouldRecord) {
-            val firstStageDiff = firstStageClickTime - targetTime
-            val timeSource = clickSettingsRepository.getTimeSource().first()
-            LogConsole.d(TAG, "保存历史记录: stage=1, timeSource=${timeSource.name}")
-            giftClickHistoryDao.insert(
-                GiftClickHistory(
-                    stage = 1,
-                    ntpClickTime = firstStageClickTime,
-                    localClickTime = localClickTime,
-                    targetTime = targetTime,
-                    delayMillis = clickDelay,
-                    actualDiff = firstStageDiff,
-                    timeSource = timeSource.name
-                )
-            )
-            LogConsole.d(TAG, "第一阶段历史记录: 偏差=${firstStageDiff}ms")
-        }
+        recordHistory(
+            stage = stageIndex,
+            ntpClickTime = clickTime,
+            localClickTime = System.currentTimeMillis(),
+            targetTime = targetTime,
+            clickDelay = clickDelay.toDouble(),
+            actualDiff = clickTime - targetTime,
+        )
+        return true
+    }
 
-        // ========== 第二阶段：每100ms查找付款并赠送，超时3秒 ==========
-        LogConsole.d(TAG, "第二阶段：开始查找付款并赠送按钮")
-        var secondButton: Point? = null
+    /**
+     * 轮询阶段 — 循环查找按钮直到超时，找到即点
+     */
+    private suspend fun CoroutineScope.executePollStage(
+        keywords: List<String>,
+        timing: StageTiming.Poll,
+        stageIndex: Int,
+    ): Boolean {
         val startTime = timeService.getCurrentTime()
-        val timeoutMillis = 3000L
 
-        // 初始等待200ms（按钮不会立即出现）
+        // 初始等待（UI需要时间过渡）
         delay(300)
 
-        while (timeService.getCurrentTime() - startTime < timeoutMillis) {
-            secondButton = withContext(Dispatchers.IO) {
-                AccessibilityClickService.getInstance()?.findSecondStageButton()
+        while (timeService.getCurrentTime() - startTime < timing.timeoutMs) {
+            val button = withContext(Dispatchers.IO) {
+                AccessibilityClickService.getInstance()?.findButtonByKeywords(keywords)
             }
 
-            if (secondButton != null) {
-                LogConsole.d(TAG, "第二阶段：找到付款并赠送按钮 (${secondButton.x}, ${secondButton.y})")
+            if (button != null) {
+                LogConsole.d(TAG, "阶段 $stageIndex 找到按钮 (${button.x}, ${button.y})")
                 withContext(Dispatchers.IO) {
-                    AccessibilityClickService.getInstance()?.performGlobalClick(secondButton.x, secondButton.y)
+                    AccessibilityClickService.getInstance()?.performGlobalClick(button.x, button.y)
                 }
-                // 点击后获取实际时间
-                val secondStageClickTime = timeService.getCurrentTime()
-                val localClickTime = System.currentTimeMillis()
+                val clickTime = timeService.getCurrentTime()
 
-                // 记录第二阶段点击历史
-                if (shouldRecord) {
-                    val timeSource = clickSettingsRepository.getTimeSource().first()
-                    LogConsole.d(TAG, "保存历史记录: stage=2, timeSource=${timeSource.name}")
-                    giftClickHistoryDao.insert(
-                        GiftClickHistory(
-                            stage = 2,
-                            ntpClickTime = secondStageClickTime,
-                            localClickTime = localClickTime,
-                            targetTime = secondStageClickTime, // 第二阶段是找到就点击，目标时间就是点击时间
-                            delayMillis = clickDelay,
-                            actualDiff = 0, // 第二阶段没有目标时间偏差
-                            timeSource = timeSource.name
-                        )
-                    )
-                    LogConsole.d(TAG, "第二阶段历史记录: 已记录")
-                }
-
-                // 点击后等待确认
-                delay(1000)
-                withContext(Dispatchers.Main) {
-                    ToastUtils.show(this@FloatingMenuService, "礼物任务已完成")
-                }
-                LogConsole.d(TAG, "=== 礼物任务成功完成 ===")
-                return@runGiftClickTaskOnce
+                recordHistory(
+                    stage = stageIndex,
+                    ntpClickTime = clickTime,
+                    localClickTime = System.currentTimeMillis(),
+                    targetTime = clickTime,
+                    clickDelay = 0.0,
+                    actualDiff = 0,
+                )
+                return true
             }
 
-            // 每100ms查找一次
-            delay(100)
+            delay(timing.intervalMs)
         }
 
         // 超时未找到
-        LogConsole.d(TAG, "第二阶段：未找到付款并赠送按钮，超时退出")
+        LogConsole.w(TAG, "阶段 $stageIndex 超时未找到按钮")
         withContext(Dispatchers.Main) {
-            ToastUtils.show(this@FloatingMenuService, "未找到付款并赠送按钮")
+            ToastUtils.show(this@FloatingMenuService, "未找到: 阶段${stageIndex}")
         }
+        return false
+    }
+
+    /**
+     * 记录历史
+     */
+    private suspend fun recordHistory(
+        stage: Int,
+        ntpClickTime: Long,
+        localClickTime: Long,
+        targetTime: Long,
+        clickDelay: Double,
+        actualDiff: Long,
+    ) {
+        val shouldRecord = clickSettingsRepository.getRecordHistory().first()
+        if (!shouldRecord) return
+
+        val timeSource = clickSettingsRepository.getTimeSource().first()
+        LogConsole.d(TAG, "保存历史记录: stage=$stage, timeSource=${timeSource.name}")
+        giftClickHistoryDao.insert(
+            GiftClickHistory(
+                stage = stage,
+                ntpClickTime = ntpClickTime,
+                localClickTime = localClickTime,
+                targetTime = targetTime,
+                delayMillis = clickDelay,
+                actualDiff = actualDiff,
+                timeSource = timeSource.name,
+            )
+        )
     }
 }
