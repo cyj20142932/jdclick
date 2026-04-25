@@ -229,66 +229,73 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     // 时间同步按钮
-                    TextButton(onClick = {
-                        scope.launch {
-                            viewModel.syncNtpTime()
-                            viewModel.showSyncMessage(context)
-                        }
-                    }) {
+                    TextButton(
+                        onClick = {
+                            scope.launch {
+                                viewModel.syncNtpTime()
+                                viewModel.showSyncMessage(context)
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Icon(
                             Icons.Default.Sync,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("时间同步", style = MaterialTheme.typography.labelMedium)
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            "同步",
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1
+                        )
                     }
 
                     // 点击延迟按钮
-                    TextButton(onClick = { showDelayDialog = true }) {
+                    TextButton(
+                        onClick = { showDelayDialog = true },
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Icon(
                             Icons.Default.Timer,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("延迟: ${delayMillis.toLong()}ms", style = MaterialTheme.typography.labelMedium)
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            "${delayMillis.toLong()}ms",
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1
+                        )
                     }
 
                     // 检查权限按钮
-                    TextButton(onClick = {
-                        viewModel.checkAllPermissions()
-                        viewModel.checkServiceStatus(context)
-                        val a11y = if (viewModel.isAccessibilityEnabled()) "✓" else "✗"
-                        val overlay = if (viewModel.isOverlayEnabled()) "✓" else "✗"
-                        scope.launch {
-                            snackbarHostState.showSnackbar("无障碍: $a11y  悬浮窗: $overlay")
-                        }
-                    }) {
+                    TextButton(
+                        onClick = {
+                            viewModel.checkAllPermissions()
+                            viewModel.checkServiceStatus(context)
+                            val a11y = if (viewModel.isAccessibilityEnabled()) "✓" else "✗"
+                            val overlay = if (viewModel.isOverlayEnabled()) "✓" else "✗"
+                            scope.launch {
+                                snackbarHostState.showSnackbar("无障碍: $a11y  悬浮窗: $overlay")
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Icon(
                             Icons.Default.CheckCircle,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("检查权限", style = MaterialTheme.typography.labelMedium)
-                    }
-
-                    // 日志按钮
-                    TextButton(onClick = {
-                        navController?.navigate(Screen.Log.route)
-                    }) {
-                        Icon(
-                            Icons.Default.Terminal,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            "检查",
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("日志", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
