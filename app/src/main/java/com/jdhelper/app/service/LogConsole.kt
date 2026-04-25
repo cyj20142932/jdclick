@@ -5,6 +5,7 @@ import com.jdhelper.app.data.local.LogEntry
 import com.jdhelper.app.domain.repository.LogRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -16,6 +17,8 @@ object LogConsole {
     const val INFO = 2
     const val WARN = 3
     const val ERROR = 4
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     // 通过lateinit延迟注入Repository
     @Volatile
@@ -53,7 +56,7 @@ object LogConsole {
         )
 
         logRepository?.let { repo ->
-            CoroutineScope(Dispatchers.IO).launch {
+            scope.launch {
                 try {
                     repo.addLog(logEntry)
                 } catch (e: Exception) {
