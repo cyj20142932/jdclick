@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -24,6 +25,8 @@ class JdTimeService @Inject constructor() {
 
         @Volatile
         private var hasSyncedAtLeastOnce: Boolean = false  // 是否曾经成功同步过
+
+        private val lastSyncAttempt = AtomicLong(0L)
     }
 
     private val client = OkHttpClient.Builder()
@@ -36,6 +39,13 @@ class JdTimeService @Inject constructor() {
      * @return 时间差（毫秒），正值表示本地时间比京东服务器时间快
      */
     suspend fun syncJdTime(): Boolean = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        if (now - lastSyncAttempt.get() < 5000) {
+            LogConsole.d(TAG, "5秒内已同步过，跳过")
+            return@withContext hasSyncedAtLeastOnce
+        }
+        lastSyncAttempt.set(now)
+
         for (attempt in 1..MAX_RETRIES) {
             try {
                 val result = requestJdTime()
