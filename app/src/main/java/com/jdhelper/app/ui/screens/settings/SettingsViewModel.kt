@@ -99,7 +99,7 @@ class SettingsViewModel @Inject constructor(
             )
             val isAccessibilityEnabled = enabledServices.any { serviceInfo ->
                 serviceInfo.resolveInfo.serviceInfo.packageName == context.packageName &&
-                        serviceInfo.resolveInfo.serviceInfo.name == "com.jdhelper.service.AccessibilityClickService"
+                        serviceInfo.resolveInfo.serviceInfo.name == "com.jdhelper.app.service.AccessibilityClickService"
             }
             _uiState.update { it.copy(isAccessibilityEnabled = isAccessibilityEnabled) }
             LogConsole.d(TAG, "无障碍服务状态：$isAccessibilityEnabled")

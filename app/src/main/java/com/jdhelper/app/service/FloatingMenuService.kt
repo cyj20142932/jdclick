@@ -5,8 +5,10 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Point
@@ -69,12 +71,23 @@ class FloatingMenuService : Service() {
         const val NOTIFICATION_ID = 1002
         const val ACTION_SHOW = "com.jdhelper.SHOW_MENU"
         const val ACTION_HIDE = "com.jdhelper.HIDE_MENU"
+        const val ACTION_TIME_SYNCED = "com.jdhelper.TIME_SYNCED"
 
         private var instance: FloatingMenuService? = null
 
         fun getInstance(): FloatingMenuService? = instance
 
         fun isRunning(): Boolean = instance != null
+
+        /**
+         * 通知所有悬浮菜单时间已同步
+         */
+        fun notifyTimeSynced(context: Context) {
+            val intent = Intent(ACTION_TIME_SYNCED).apply {
+                setPackage(context.packageName)
+            }
+            context.sendBroadcast(intent)
+        }
 
         @JvmStatic
         fun startService(context: Context) {
@@ -149,6 +162,18 @@ class FloatingMenuService : Service() {
         try {
             windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
             createNotificationChannel()
+
+            // 注册时间同步广播接收器
+            val timeSyncReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    if (intent?.action == ACTION_TIME_SYNCED) {
+                        LogConsole.d(TAG, "收到时间同步广播，更新显示")
+                        updateNtpStatusDisplay()
+                    }
+                }
+            }
+            val filter = IntentFilter(ACTION_TIME_SYNCED)
+            registerReceiver(timeSyncReceiver, filter)
 
             // 读取时间源设置
             CoroutineScope(Dispatchers.IO).launch {

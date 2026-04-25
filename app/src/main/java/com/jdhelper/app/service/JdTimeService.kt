@@ -21,6 +21,9 @@ class JdTimeService @Inject constructor() {
 
         @Volatile
         private var sharedJdOffset: Long = 0L  // 京东时间差（本地时间 - 京东时间）
+
+        @Volatile
+        private var hasSyncedAtLeastOnce: Boolean = false  // 是否曾经成功同步过
     }
 
     private val client = OkHttpClient.Builder()
@@ -38,6 +41,7 @@ class JdTimeService @Inject constructor() {
                 val result = requestJdTime()
                 if (result != null) {
                     sharedJdOffset = result
+                    hasSyncedAtLeastOnce = true
                     LogConsole.d(TAG, "京东时间同步成功: offset=${result}ms")
                     return@withContext true
                 }
@@ -144,5 +148,5 @@ class JdTimeService @Inject constructor() {
     /**
      * 检查是否已同步
      */
-    fun isSynced(): Boolean = sharedJdOffset != 0L
+    fun isSynced(): Boolean = hasSyncedAtLeastOnce
 }

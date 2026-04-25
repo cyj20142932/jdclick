@@ -1,5 +1,7 @@
 package com.jdhelper.app.ui.navigation
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
@@ -26,6 +28,28 @@ import com.jdhelper.app.ui.screens.home.HomeScreen
 import com.jdhelper.app.ui.screens.settings.SettingsScreen
 import com.jdhelper.app.ui.screens.history.HistoryScreen
 import com.jdhelper.app.ui.screens.log.LogScreen
+
+// 页面转场动画配置
+private const val ANIMATION_DURATION = 300
+
+private val fadeIn = fadeIn(animationSpec = tween(ANIMATION_DURATION))
+private val fadeOut = fadeOut(animationSpec = tween(ANIMATION_DURATION))
+private val slideInLeft = slideInHorizontally(
+    initialOffsetX = { it },
+    animationSpec = tween(ANIMATION_DURATION)
+)
+private val slideOutLeft = slideOutHorizontally(
+    targetOffsetX = { -it },
+    animationSpec = tween(ANIMATION_DURATION)
+)
+private val slideInRight = slideInHorizontally(
+    initialOffsetX = { -it },
+    animationSpec = tween(ANIMATION_DURATION)
+)
+private val slideOutRight = slideOutHorizontally(
+    targetOffsetX = { it },
+    animationSpec = tween(ANIMATION_DURATION)
+)
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     data object Home : Screen("home", "首页", Icons.Default.Home)
@@ -79,21 +103,41 @@ fun JDHelperNavHost(
         NavHost(
             navController = navController,
             startDestination = Screen.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = { slideInLeft + fadeIn },
+            exitTransition = { slideOutLeft + fadeOut },
+            popEnterTransition = { slideInRight + fadeIn },
+            popExitTransition = { slideOutRight + fadeOut }
         ) {
-            composable(Screen.Home.route) {
+            composable(
+                route = Screen.Home.route,
+                enterTransition = { slideInLeft + fadeIn },
+                exitTransition = { slideOutLeft + fadeOut }
+            ) {
                 HomeScreen(navController = navController)
             }
 
-            composable(Screen.Settings.route) {
+            composable(
+                route = Screen.Settings.route,
+                enterTransition = { slideInLeft + fadeIn },
+                exitTransition = { slideOutLeft + fadeOut }
+            ) {
                 SettingsScreen()
             }
 
-            composable(Screen.History.route) {
+            composable(
+                route = Screen.History.route,
+                enterTransition = { slideInLeft + fadeIn },
+                exitTransition = { slideOutLeft + fadeOut }
+            ) {
                 HistoryScreen()
             }
 
-            composable(Screen.Log.route) {
+            composable(
+                route = Screen.Log.route,
+                enterTransition = { slideInLeft + fadeIn },
+                exitTransition = { slideOutLeft + fadeOut }
+            ) {
                 LogScreen()
             }
         }

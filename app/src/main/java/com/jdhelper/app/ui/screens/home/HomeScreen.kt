@@ -21,11 +21,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
+import com.jdhelper.app.ui.components.JDCard
+import com.jdhelper.app.ui.components.CardVariant
 import com.jdhelper.app.ui.components.StatusCard
 import com.jdhelper.app.ui.components.TopStatusBar
 import com.jdhelper.app.data.local.TimeSource
 import com.jdhelper.app.ui.navigation.Screen
-import com.jdhelper.app.ui.theme.DarkSurface
 import com.jdhelper.app.ui.theme.DarkBackground
 import kotlinx.coroutines.launch
 
@@ -195,52 +196,42 @@ fun HomeScreen(
             }
 
             // 时间源切换卡片
-            Card(
+            JDCard(
+                variant = CardVariant.FILLED,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = 12.dp),
-                colors = CardDefaults.cardColors(containerColor = DarkSurface)
+                    .padding(bottom = 12.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "时间源",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color.White
-                    )
-                    Text(
-                        text = "京东服务器时间",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.7f)
-                    )
-                }
+                Text(
+                    text = "时间源",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "京东服务器时间",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             // 快捷操作区
-            Card(
+            JDCard(
+                variant = CardVariant.FILLED,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = DarkSurface
-                )
+                    .padding(bottom = 16.dp)
             ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
+                        .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     // 时间同步按钮
                     TextButton(onClick = {
                         scope.launch {
                             viewModel.syncNtpTime()
-                            // 同步完成后显示消息
                             viewModel.showSyncMessage(context)
                         }
                     }) {

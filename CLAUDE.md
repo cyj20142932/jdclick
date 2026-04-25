@@ -41,12 +41,18 @@ This project follows **Clean Architecture** with MVVM pattern, organized into th
 ```
 com.jdhelper.app/
 ├── service/           # Android Services (核心业务逻辑)
-├── data/              # Data layer (Room + Repository)
-├── domain/            # Domain layer (Repository interfaces)
-├── di/                # Hilt dependency injection
-├── ui/                # Jetpack Compose UI (screens, components, theme)
+├── data/              # Data layer (Room + Repository implementations)
+│   ├── local/         # Room entities, DAOs, Database
+│   └── repository/    # Repository implementations
+├── domain/            # Domain layer (Repository interfaces, Models, UseCases)
+├── di/                # Hilt dependency injection modules
+├── ui/                # Jetpack Compose UI (screens, components, theme, navigation)
 └── receiver/          # Broadcast receivers (boot, etc.)
 ```
+
+**Domain Layer** (在 `domain/` 目录下):
+- `domain/model/` - 领域实体: ClickTask, TimeSyncStatus, ServiceState
+- `domain/repository/` - Repository 接口: ClickSettingsRepository, ClickTaskRepository, TimeSyncRepository, ServiceStateRepository, LogRepository
 
 **核心服务** (在 `service/` 目录下):
 - `FloatingService` / `PositionFloatingService` - 悬浮窗时钟，毫秒级精度，支持拖拽

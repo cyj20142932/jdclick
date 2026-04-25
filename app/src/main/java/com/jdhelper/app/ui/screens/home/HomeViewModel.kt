@@ -241,6 +241,12 @@ class HomeViewModel @Inject constructor(
         }
 
         LogConsole.d(TAG, "同步完成: source=$currentSource, success=$success, message=$message")
+
+        // 同步成功后通知悬浮菜单更新显示
+        if (success) {
+            com.jdhelper.app.service.FloatingMenuService.notifyTimeSynced(context)
+        }
+
         return success
     }
 
