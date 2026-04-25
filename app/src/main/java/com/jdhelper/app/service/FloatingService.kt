@@ -52,9 +52,6 @@ class FloatingService : Service() {
         const val EXTRA_POSITION_X = "position_x"
         const val EXTRA_POSITION_Y = "position_y"
 
-        private const val PREFS_NAME = "floating_settings"
-        private const val KEY_MILLISECOND_DIGITS = "millisecond_digits"
-
         private var instance: FloatingService? = null
 
         fun getInstance(): FloatingService? = instance
@@ -102,6 +99,7 @@ class FloatingService : Service() {
     private var floatingView: View? = null
     private var timeTextView: TextView? = null
     private var timeUpdateJob: Job? = null
+    @Volatile
     private var cachedFormat: SimpleDateFormat = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault())
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
