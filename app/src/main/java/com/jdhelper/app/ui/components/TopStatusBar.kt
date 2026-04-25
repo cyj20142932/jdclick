@@ -14,7 +14,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.jdhelper.app.data.local.TimeSource
 import com.jdhelper.app.ui.theme.BlueGreenEnd
 import com.jdhelper.app.ui.theme.BlueGreenStart
 
@@ -25,7 +24,6 @@ fun TopStatusBar(
     ntpOffset: String = "",
     nextClickCountdown: String = "",
     millisecondDigits: Int = 1,
-    timeSource: TimeSource = TimeSource.JD,
     jdOffset: String = "",
     modifier: Modifier = Modifier
 ) {
@@ -68,14 +66,8 @@ fun TopStatusBar(
                 Spacer(modifier = Modifier.width(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     // 根据时间源显示对应偏移
-                    val offsetDisplay = when (timeSource) {
-                        TimeSource.JD -> jdOffset
-                        else -> jdOffset
-                    }
-                    val sourceLabel = when (timeSource) {
-                        TimeSource.JD -> "JD"
-                        else -> "JD"
-                    }
+                    val offsetDisplay = jdOffset
+                    val sourceLabel = "JD"
 
                     if (millisecondDigits > 0) {
                         Text(

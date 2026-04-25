@@ -49,22 +49,10 @@ class DefaultTimeService @Inject constructor(
     }
 
     override fun getCurrentTime(): Long {
-        val source = cachedTimeSource
-        val baseTime = when (source) {
-            TimeSource.JD -> jdTimeService.getCurrentJdTime()
-            else -> jdTimeService.getCurrentJdTime()
-        }
-        // 加上延迟补偿
-        return baseTime + cachedDelayMillis.toLong()
+        return jdTimeService.getCurrentJdTime() + cachedDelayMillis.toLong()
     }
 
-    override fun getTimeOffset(): Long {
-        val source = cachedTimeSource
-        return when (source) {
-            TimeSource.JD -> jdTimeService.getJdOffset()
-            else -> jdTimeService.getJdOffset()
-        }
-    }
+    override fun getTimeOffset(): Long = jdTimeService.getJdOffset()
 
     override fun getOffsetText(): String {
         val offset = getTimeOffset()
@@ -72,27 +60,15 @@ class DefaultTimeService @Inject constructor(
     }
 
     override suspend fun syncTime(): Boolean {
-        // 使用缓存的时间源，但在切换时间源后确保已同步
-        // 由于 cachedTimeSource 通过 Flow 收集更新，切换时间源时会自动更新
-        val source = cachedTimeSource
-        LogConsole.d(TAG, "syncTime: 当前时间源 = $source")
-        return when (source) {
-            TimeSource.JD -> jdTimeService.syncJdTime()
-            else -> jdTimeService.syncJdTime()
-        }
+        LogConsole.d(TAG, "syncTime: 当前时间源 = JD")
+        return jdTimeService.syncJdTime()
     }
 
     override fun getCurrentTimeSource(): TimeSource {
         return cachedTimeSource
     }
 
-    override fun isSynced(): Boolean {
-        val source = cachedTimeSource
-        return when (source) {
-            TimeSource.JD -> jdTimeService.isSynced()
-            else -> jdTimeService.isSynced()
-        }
-    }
+    override fun isSynced(): Boolean = jdTimeService.isSynced()
 
     override fun observeTimeSource(): Flow<TimeSource> {
         return clickSettingsRepository.getTimeSource()

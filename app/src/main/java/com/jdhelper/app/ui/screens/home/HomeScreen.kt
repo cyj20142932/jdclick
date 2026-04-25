@@ -25,7 +25,6 @@ import com.jdhelper.app.ui.components.JDCard
 import com.jdhelper.app.ui.components.CardVariant
 import com.jdhelper.app.ui.components.StatusCard
 import com.jdhelper.app.ui.components.TopStatusBar
-import com.jdhelper.app.data.local.TimeSource
 import com.jdhelper.app.ui.navigation.Screen
 import com.jdhelper.app.ui.theme.DarkBackground
 import kotlinx.coroutines.launch
@@ -45,7 +44,6 @@ fun HomeScreen(
     val nextClickCountdown by viewModel.nextClickCountdown.collectAsState()
     val ntpOffset by viewModel.ntpOffset.collectAsState()
     val millisecondDigits by viewModel.millisecondDigits.collectAsState()
-    val timeSource by viewModel.timeSource.collectAsState()
     val jdOffset by viewModel.jdOffset.collectAsState()
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
@@ -120,7 +118,6 @@ fun HomeScreen(
                 ntpOffset = ntpOffset,
                 nextClickCountdown = nextClickCountdown,
                 millisecondDigits = millisecondDigits,
-                timeSource = timeSource,
                 jdOffset = jdOffset
             )
         },
