@@ -910,7 +910,7 @@ class FloatingMenuService : Service() {
     private suspend fun CoroutineScope.executeGiftWorkflow(stages: List<GiftClickStage>) {
         LogConsole.d(TAG, "=== 礼物工作流开始，共 ${stages.size} 个阶段 ===")
 
-        val clickDelay = clickSettingsRepository.getDelayMillis().first()
+        val clickDelay = clickSettingsRepository.getDelayMillis().first().toLong()
 
         for ((index, stage) in stages.withIndex()) {
             val stageIndex = index + 1
@@ -955,7 +955,13 @@ class FloatingMenuService : Service() {
     ): Boolean {
         val button = withContext(Dispatchers.IO) {
             AccessibilityClickService.getInstance()?.findButtonByKeywords(keywords)
-        } ?: return false
+        } ?: run {
+            LogConsole.w(TAG, "阶段 $stageIndex 未找到按钮")
+            withContext(Dispatchers.Main) {
+                ToastUtils.show(this@FloatingMenuService, "未找到: 阶段${stageIndex}")
+            }
+            return false
+        }
 
         withContext(Dispatchers.Main) {
             ToastUtils.show(this@FloatingMenuService, "找到${stageIndex}阶段按钮，等待整分点击")
@@ -973,7 +979,10 @@ class FloatingMenuService : Service() {
         val targetTime = calendar.timeInMillis + clickDelay.toLong()
         val timeToTarget = targetTime - ntpTime
 
-        if (timeToTarget <= 0) return false
+        if (timeToTarget <= 0) {
+            LogConsole.w(TAG, "阶段 $stageIndex 目标时间已过，跳过")
+            return false
+        }
 
         // 分段等待：协程 delay + LockSupport.parkNanos 精确等待
         val spinThreshold = 50L
