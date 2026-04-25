@@ -28,6 +28,9 @@ class JdTimeService @Inject constructor() {
         private var serverTime: Long = 0L       // 京东服务器时间（毫秒时间戳）
 
         @Volatile
+        private var cachedJdOffset: Long = 0L   // 缓存的时间差（仅用于显示），同步时计算一次
+
+        @Volatile
         private var hasSyncedAtLeastOnce: Boolean = false  // 是否曾经成功同步过
 
         private val lastSyncAttempt = AtomicLong(0L)
@@ -61,6 +64,7 @@ class JdTimeService @Inject constructor() {
                 if (result != null) {
                     elapsedAtServer = result.elapsedAtServer
                     serverTime = result.serverTime
+                    cachedJdOffset = System.currentTimeMillis() - getCurrentJdTime()
                     hasSyncedAtLeastOnce = true
                     LogConsole.d(TAG, "京东时间同步成功")
                     return@withContext true
@@ -150,12 +154,9 @@ class JdTimeService @Inject constructor() {
     }
 
     /**
-     * 获取京东时间差（仅用于显示）
+     * 获取京东时间差（仅用于显示，同步时缓存一次）
      */
-    fun getJdOffset(): Long {
-        if (!hasSyncedAtLeastOnce) return 0L
-        return System.currentTimeMillis() - getCurrentJdTime()
-    }
+    fun getJdOffset(): Long = cachedJdOffset
 
     /**
      * 获取当前京东时间
