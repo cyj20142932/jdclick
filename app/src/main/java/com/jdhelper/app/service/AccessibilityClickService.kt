@@ -295,26 +295,13 @@ class AccessibilityClickService : AccessibilityService() {
     }
 
     /**
-     * 查找第一阶段按钮（一键送礼）
+     * 通过关键词列表查找按钮（通用）
      */
     @Suppress("DEPRECATION")
-    fun findFirstStageButton(): Point? {
+    fun findButtonByKeywords(keywords: List<String>): Point? {
         val rootNode = rootInActiveWindow ?: return null
         return try {
-            searchButtonByKeywords(rootNode, listOf("一键送礼", "送给"))
-        } finally {
-            rootNode.recycle()
-        }
-    }
-
-    /**
-     * 查找第二阶段按钮（付款并赠送）
-     */
-    @Suppress("DEPRECATION")
-    fun findSecondStageButton(): Point? {
-        val rootNode = rootInActiveWindow ?: return null
-        return try {
-            searchButtonByKeywords(rootNode, listOf("付款并赠送"))
+            searchButtonByKeywords(rootNode, keywords)
         } finally {
             rootNode.recycle()
         }
