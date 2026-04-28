@@ -3,6 +3,8 @@ package com.jdhelper.app.ui.screens.settings
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,12 +14,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -54,9 +59,24 @@ fun SettingsScreen(
     // 收集历史记录数量
     val historyCount by viewModel.historyCount.collectAsState()
 
+    val clockFontFamily by viewModel.clockFontFamily.collectAsState()
+    val clockFontSize by viewModel.clockFontSize.collectAsState()
+    val clockFontColor by viewModel.clockFontColor.collectAsState()
+    val clockBgColor by viewModel.clockBgColor.collectAsState()
+    val clockAlpha by viewModel.clockAlpha.collectAsState()
+    val clockPadding by viewModel.clockPadding.collectAsState()
+    val clockLetterSpacing by viewModel.clockLetterSpacing.collectAsState()
+
     var showMillisecondDialog by remember { mutableStateOf(false) }
     var showClickDurationDialog by remember { mutableStateOf(false) }
     var showClearHistoryDialog by remember { mutableStateOf(false) }
+    var showFontFamilyDialog by remember { mutableStateOf(false) }
+    var showFontSizeDialog by remember { mutableStateOf(false) }
+    var showFontColorDialog by remember { mutableStateOf(false) }
+    var showBgColorDialog by remember { mutableStateOf(false) }
+    var showAlphaDialog by remember { mutableStateOf(false) }
+    var showPaddingDialog by remember { mutableStateOf(false) }
+    var showLetterSpacingDialog by remember { mutableStateOf(false) }
 
     // 页面恢复时检查权限状态
     DisposableEffect(lifecycleOwner) {
@@ -232,6 +252,282 @@ fun SettingsScreen(
         )
     }
 
+    // 字体选择对话框
+    if (showFontFamilyDialog) {
+        val fontOptions = listOf(
+            "monospace" to "等宽 (monospace)",
+            "sans-serif" to "无衬线 (sans-serif)",
+            "sans-serif-light" to "无衬线细体",
+            "sans-serif-medium" to "无衬线中粗",
+            "serif" to "衬线 (serif)"
+        )
+        AlertDialog(
+            onDismissRequest = { showFontFamilyDialog = false },
+            title = { Text("时钟字体") },
+            text = {
+                Column {
+                    fontOptions.forEach { (value, label) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.setClockFontFamily(value)
+                                    showFontFamilyDialog = false
+                                }
+                                .padding(vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = value == clockFontFamily,
+                                onClick = {
+                                    viewModel.setClockFontFamily(value)
+                                    showFontFamilyDialog = false
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showFontFamilyDialog = false }) { Text("取消") }
+            }
+        )
+    }
+
+    // 字体大小对话框
+    if (showFontSizeDialog) {
+        var sliderValue by remember { mutableFloatStateOf(clockFontSize.toFloat()) }
+        AlertDialog(
+            onDismissRequest = { showFontSizeDialog = false },
+            title = { Text("字体大小") },
+            text = {
+                Column {
+                    Text("${sliderValue.toInt()} sp", style = MaterialTheme.typography.headlineMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Slider(
+                        value = sliderValue,
+                        onValueChange = { sliderValue = it },
+                        valueRange = 12f..48f,
+                        steps = 35,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setClockFontSize(sliderValue.toInt())
+                    showFontSizeDialog = false
+                }) { Text("确定") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showFontSizeDialog = false }) { Text("取消") }
+            }
+        )
+    }
+
+    // 字体颜色对话框
+    if (showFontColorDialog) {
+        val colorOptions = listOf(
+            -1 to "白",
+            0xFFF44336.toInt() to "红",
+            0xFFE91E63.toInt() to "粉",
+            0xFFFF9800.toInt() to "橙",
+            0xFFFFEB3B.toInt() to "黄",
+            0xFF4CAF50.toInt() to "绿",
+            0xFF009688.toInt() to "青",
+            0xFF2196F3.toInt() to "蓝",
+            0xFF3F51B5.toInt() to "靛",
+            0xFF9C27B0.toInt() to "紫",
+            0xFF00BCD4.toInt() to "青蓝",
+            0xFF9E9E9E.toInt() to "灰",
+        )
+        AlertDialog(
+            onDismissRequest = { showFontColorDialog = false },
+            title = { Text("字体颜色") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    colorOptions.chunked(4).forEach { row ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            row.forEach { (colorInt, _) ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(androidx.compose.ui.graphics.Color(colorInt))
+                                        .border(
+                                            width = if (colorInt == clockFontColor) 3.dp else 1.dp,
+                                            color = if (colorInt == clockFontColor)
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.outline,
+                                            shape = androidx.compose.foundation.shape.CircleShape
+                                        )
+                                        .clickable {
+                                            viewModel.setClockFontColor(colorInt)
+                                            showFontColorDialog = false
+                                        }
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showFontColorDialog = false }) { Text("取消") }
+            }
+        )
+    }
+
+    // 背景颜色对话框
+    if (showBgColorDialog) {
+        val bgColorOptions = listOf(
+            0xCC333333.toInt() to "深灰",
+            0x00000000.toInt() to "透明",
+            -0x1 to "白",
+            0xCC000000.toInt() to "黑",
+            0xCCF44336.toInt() to "红",
+            0xCC4CAF50.toInt() to "绿",
+            0xCC2196F3.toInt() to "蓝",
+            0xCCFF9800.toInt() to "橙",
+            0xCC9C27B0.toInt() to "紫",
+            0xCC009688.toInt() to "青",
+            0xCC607D8B.toInt() to "灰蓝",
+            0xCC795548.toInt() to "棕",
+        )
+        AlertDialog(
+            onDismissRequest = { showBgColorDialog = false },
+            title = { Text("背景颜色") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    bgColorOptions.chunked(4).forEach { row ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            row.forEach { (colorInt, _) ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(androidx.compose.ui.graphics.Color(colorInt))
+                                        .border(
+                                            width = if (colorInt == clockBgColor) 3.dp else 1.dp,
+                                            color = if (colorInt == clockBgColor)
+                                                MaterialTheme.colorScheme.primary
+                                            else
+                                                MaterialTheme.colorScheme.outline,
+                                            shape = androidx.compose.foundation.shape.CircleShape
+                                        )
+                                        .clickable {
+                                            viewModel.setClockBgColor(colorInt)
+                                            showBgColorDialog = false
+                                        }
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showBgColorDialog = false }) { Text("取消") }
+            }
+        )
+    }
+
+    // 透明度对话框
+    if (showAlphaDialog) {
+        var sliderValue by remember { mutableFloatStateOf(clockAlpha.toFloat()) }
+        AlertDialog(
+            onDismissRequest = { showAlphaDialog = false },
+            title = { Text("透明度") },
+            text = {
+                Column {
+                    Text("${(sliderValue / 255f * 100).toInt()}%", style = MaterialTheme.typography.headlineMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Slider(
+                        value = sliderValue,
+                        onValueChange = { sliderValue = it },
+                        valueRange = 0f..255f,
+                        steps = 50,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setClockAlpha(sliderValue.toInt())
+                    showAlphaDialog = false
+                }) { Text("确定") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAlphaDialog = false }) { Text("取消") }
+            }
+        )
+    }
+
+    // 间距对话框
+    if (showPaddingDialog) {
+        var sliderValue by remember { mutableFloatStateOf(clockPadding.toFloat()) }
+        AlertDialog(
+            onDismissRequest = { showPaddingDialog = false },
+            title = { Text("间距 (Padding)") },
+            text = {
+                Column {
+                    Text("${sliderValue.toInt()} dp", style = MaterialTheme.typography.headlineMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Slider(
+                        value = sliderValue,
+                        onValueChange = { sliderValue = it },
+                        valueRange = 4f..32f,
+                        steps = 27,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setClockPadding(sliderValue.toInt())
+                    showPaddingDialog = false
+                }) { Text("确定") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPaddingDialog = false }) { Text("取消") }
+            }
+        )
+    }
+
+    // 字间距对话框
+    if (showLetterSpacingDialog) {
+        var sliderValue by remember { mutableFloatStateOf(clockLetterSpacing) }
+        AlertDialog(
+            onDismissRequest = { showLetterSpacingDialog = false },
+            title = { Text("字间距") },
+            text = {
+                Column {
+                    Text(String.format("%.2f", sliderValue), style = MaterialTheme.typography.headlineMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Slider(
+                        value = sliderValue,
+                        onValueChange = { sliderValue = it },
+                        valueRange = -0.05f..0.20f,
+                        steps = 24,
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setClockLetterSpacing(sliderValue)
+                    showLetterSpacingDialog = false
+                }) { Text("确定") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLetterSpacingDialog = false }) { Text("取消") }
+            }
+        )
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
@@ -396,6 +692,77 @@ fun SettingsScreen(
                         else -> "显示1位"
                     },
                     onClick = { showMillisecondDialog = true }
+                )
+            }
+
+            Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+            // 外观设置
+            SettingsSection(title = "外观设置") {
+                Divider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+
+                Text(
+                    "悬浮时钟外观",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.TextFields,
+                    title = "字体",
+                    subtitle = when (clockFontFamily) {
+                        "monospace" -> "等宽 (monospace)"
+                        "sans-serif" -> "无衬线 (sans-serif)"
+                        "sans-serif-light" -> "无衬线细体"
+                        "sans-serif-medium" -> "无衬线中粗"
+                        "serif" -> "衬线 (serif)"
+                        else -> clockFontFamily
+                    },
+                    onClick = { showFontFamilyDialog = true }
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.FormatSize,
+                    title = "字体大小",
+                    subtitle = "${clockFontSize} sp",
+                    onClick = { showFontSizeDialog = true }
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.Palette,
+                    title = "字体颜色",
+                    subtitle = "点击选择",
+                    onClick = { showFontColorDialog = true }
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.FormatColorFill,
+                    title = "背景颜色",
+                    subtitle = "点击选择",
+                    onClick = { showBgColorDialog = true }
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.Opacity,
+                    title = "透明度",
+                    subtitle = "${(clockAlpha / 255f * 100).toInt()}%",
+                    onClick = { showAlphaDialog = true }
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.SpaceBar,
+                    title = "间距 (Padding)",
+                    subtitle = "${clockPadding} dp",
+                    onClick = { showPaddingDialog = true }
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.TextFields,
+                    title = "字间距",
+                    subtitle = String.format("%.2f", clockLetterSpacing),
+                    onClick = { showLetterSpacingDialog = true }
                 )
             }
 
