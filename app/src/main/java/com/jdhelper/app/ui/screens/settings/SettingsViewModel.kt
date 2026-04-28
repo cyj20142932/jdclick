@@ -12,6 +12,7 @@ import com.jdhelper.app.service.JdTimeService
 import com.jdhelper.app.service.LogConsole
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -53,6 +54,27 @@ class SettingsViewModel @Inject constructor(
 
     val historyCount: StateFlow<Int> = giftClickHistoryDao.getHistoryCount()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
+    val clockFontFamily: StateFlow<String> = clickSettingsRepository.getClockFontFamily()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "monospace")
+
+    val clockFontSize: StateFlow<Int> = clickSettingsRepository.getClockFontSize()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 22)
+
+    val clockFontColor: StateFlow<Int> = clickSettingsRepository.getClockFontColor()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), -1)
+
+    val clockBgColor: StateFlow<Int> = clickSettingsRepository.getClockBgColor()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0xCC333333.toInt())
+
+    val clockAlpha: StateFlow<Int> = clickSettingsRepository.getClockAlpha()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 204)
+
+    val clockPadding: StateFlow<Int> = clickSettingsRepository.getClockPadding()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 16)
+
+    val clockLetterSpacing: StateFlow<Float> = clickSettingsRepository.getClockLetterSpacing()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0f)
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
@@ -159,5 +181,33 @@ class SettingsViewModel @Inject constructor(
 
     suspend fun restoreDelayFromHistory(delay: Double) {
         clickSettingsRepository.setDelayMillis(delay)
+    }
+
+    fun setClockFontFamily(family: String) {
+        viewModelScope.launch { clickSettingsRepository.setClockFontFamily(family) }
+    }
+
+    fun setClockFontSize(size: Int) {
+        viewModelScope.launch { clickSettingsRepository.setClockFontSize(size) }
+    }
+
+    fun setClockFontColor(color: Int) {
+        viewModelScope.launch { clickSettingsRepository.setClockFontColor(color) }
+    }
+
+    fun setClockBgColor(color: Int) {
+        viewModelScope.launch { clickSettingsRepository.setClockBgColor(color) }
+    }
+
+    fun setClockAlpha(alpha: Int) {
+        viewModelScope.launch { clickSettingsRepository.setClockAlpha(alpha) }
+    }
+
+    fun setClockPadding(padding: Int) {
+        viewModelScope.launch { clickSettingsRepository.setClockPadding(padding) }
+    }
+
+    fun setClockLetterSpacing(spacing: Float) {
+        viewModelScope.launch { clickSettingsRepository.setClockLetterSpacing(spacing) }
     }
 }
