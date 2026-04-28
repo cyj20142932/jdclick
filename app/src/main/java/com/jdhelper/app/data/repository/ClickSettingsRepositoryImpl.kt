@@ -55,7 +55,7 @@ class ClickSettingsRepositoryImpl @Inject constructor(
     )
     private val _clockFontSizeFlow = MutableStateFlow(prefs.getInt(KEY_CLOCK_FONT_SIZE, 22))
     private val _clockFontColorFlow = MutableStateFlow(prefs.getInt(KEY_CLOCK_FONT_COLOR, -1))
-    private val _clockBgColorFlow = MutableStateFlow(prefs.getInt(KEY_CLOCK_BG_COLOR, -865704669))
+    private val _clockBgColorFlow = MutableStateFlow(prefs.getInt(KEY_CLOCK_BG_COLOR, 0xCC333333.toInt()))
     private val _clockAlphaFlow = MutableStateFlow(prefs.getInt(KEY_CLOCK_ALPHA, 204))
     private val _clockPaddingFlow = MutableStateFlow(prefs.getInt(KEY_CLOCK_PADDING, 16))
     private val _clockLetterSpacingFlow = MutableStateFlow(prefs.getFloat(KEY_CLOCK_LETTER_SPACING, 0f))
