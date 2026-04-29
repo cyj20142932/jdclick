@@ -101,6 +101,13 @@ class FloatingService : Service() {
     private var timeUpdateJob: Job? = null
     @Volatile
     private var cachedFormat: SimpleDateFormat = SimpleDateFormat("HH:mm:ss.S", Locale.getDefault())
+    private var cachedFontFamily: String = "monospace"
+    private var cachedFontSize: Int = 22
+    private var cachedFontColor: Int = -1
+    private var cachedBgColor: Int = 0xCC333333.toInt()
+    private var cachedAlpha: Int = 204
+    private var cachedPadding: Int = 16
+    private var cachedLetterSpacing: Float = 0f
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     @Inject
@@ -179,6 +186,79 @@ class FloatingService : Service() {
                 LogConsole.e(TAG, "读取毫秒格式失败", e)
             }
         }
+
+        // 收集时钟外观设置
+        serviceScope.launch {
+            try {
+                clickSettingsRepository.getClockFontFamily().collect { family ->
+                    cachedFontFamily = family
+                    timeTextView?.typeface = android.graphics.Typeface.create(family, android.graphics.Typeface.BOLD)
+                }
+            } catch (e: Exception) {
+                LogConsole.e(TAG, "读取字体设置失败", e)
+            }
+        }
+        serviceScope.launch {
+            try {
+                clickSettingsRepository.getClockFontSize().collect { size ->
+                    cachedFontSize = size
+                    timeTextView?.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, size.toFloat())
+                }
+            } catch (e: Exception) {
+                LogConsole.e(TAG, "读取字体大小设置失败", e)
+            }
+        }
+        serviceScope.launch {
+            try {
+                clickSettingsRepository.getClockFontColor().collect { color ->
+                    cachedFontColor = color
+                    timeTextView?.setTextColor(color)
+                }
+            } catch (e: Exception) {
+                LogConsole.e(TAG, "读取字体颜色设置失败", e)
+            }
+        }
+        serviceScope.launch {
+            try {
+                clickSettingsRepository.getClockBgColor().collect { color ->
+                    cachedBgColor = color
+                    floatingView?.background?.setTint(color)
+                }
+            } catch (e: Exception) {
+                LogConsole.e(TAG, "读取背景颜色设置失败", e)
+            }
+        }
+        serviceScope.launch {
+            try {
+                clickSettingsRepository.getClockAlpha().collect { alpha ->
+                    cachedAlpha = alpha
+                    floatingView?.alpha = alpha / 255f
+                }
+            } catch (e: Exception) {
+                LogConsole.e(TAG, "读取透明度设置失败", e)
+            }
+        }
+        serviceScope.launch {
+            try {
+                clickSettingsRepository.getClockPadding().collect { padding ->
+                    cachedPadding = padding
+                    val paddingPx = (padding * resources.displayMetrics.density).toInt()
+                    floatingView?.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+                }
+            } catch (e: Exception) {
+                LogConsole.e(TAG, "读取间距设置失败", e)
+            }
+        }
+        serviceScope.launch {
+            try {
+                clickSettingsRepository.getClockLetterSpacing().collect { spacing ->
+                    cachedLetterSpacing = spacing
+                    timeTextView?.letterSpacing = spacing
+                }
+            } catch (e: Exception) {
+                LogConsole.e(TAG, "读取字间距设置失败", e)
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -252,6 +332,20 @@ class FloatingService : Service() {
         val layoutInflater = LayoutInflater.from(this)
         floatingView = layoutInflater.inflate(R.layout.floating_clock, null)
         timeTextView = floatingView?.findViewById(R.id.time_text)
+
+        // 应用缓存的时钟外观设置
+        timeTextView?.let { tv ->
+            tv.typeface = android.graphics.Typeface.create(cachedFontFamily, android.graphics.Typeface.BOLD)
+            tv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, cachedFontSize.toFloat())
+            tv.setTextColor(cachedFontColor)
+            tv.letterSpacing = cachedLetterSpacing
+        }
+        floatingView?.let { v ->
+            v.alpha = cachedAlpha / 255f
+            val paddingPx = (cachedPadding * resources.displayMetrics.density).toInt()
+            v.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+            v.background?.setTint(cachedBgColor)
+        }
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
