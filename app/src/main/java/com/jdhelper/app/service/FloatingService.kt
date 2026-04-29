@@ -33,6 +33,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -192,7 +193,9 @@ class FloatingService : Service() {
             try {
                 clickSettingsRepository.getClockFontFamily().collect { family ->
                     cachedFontFamily = family
-                    timeTextView?.typeface = android.graphics.Typeface.create(family, android.graphics.Typeface.BOLD)
+                    withContext(Dispatchers.Main) {
+                        timeTextView?.typeface = android.graphics.Typeface.create(family, android.graphics.Typeface.BOLD)
+                    }
                 }
             } catch (e: Exception) {
                 LogConsole.e(TAG, "读取字体设置失败", e)
@@ -202,7 +205,9 @@ class FloatingService : Service() {
             try {
                 clickSettingsRepository.getClockFontSize().collect { size ->
                     cachedFontSize = size
-                    timeTextView?.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, size.toFloat())
+                    withContext(Dispatchers.Main) {
+                        timeTextView?.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, size.toFloat())
+                    }
                 }
             } catch (e: Exception) {
                 LogConsole.e(TAG, "读取字体大小设置失败", e)
@@ -212,7 +217,9 @@ class FloatingService : Service() {
             try {
                 clickSettingsRepository.getClockFontColor().collect { color ->
                     cachedFontColor = color
-                    timeTextView?.setTextColor(color)
+                    withContext(Dispatchers.Main) {
+                        timeTextView?.setTextColor(color)
+                    }
                 }
             } catch (e: Exception) {
                 LogConsole.e(TAG, "读取字体颜色设置失败", e)
@@ -222,7 +229,9 @@ class FloatingService : Service() {
             try {
                 clickSettingsRepository.getClockBgColor().collect { color ->
                     cachedBgColor = color
-                    floatingView?.background?.setTint(color)
+                    withContext(Dispatchers.Main) {
+                        floatingView?.background?.setTint(color)
+                    }
                 }
             } catch (e: Exception) {
                 LogConsole.e(TAG, "读取背景颜色设置失败", e)
@@ -232,7 +241,9 @@ class FloatingService : Service() {
             try {
                 clickSettingsRepository.getClockAlpha().collect { alpha ->
                     cachedAlpha = alpha
-                    floatingView?.alpha = alpha / 255f
+                    withContext(Dispatchers.Main) {
+                        floatingView?.alpha = alpha / 255f
+                    }
                 }
             } catch (e: Exception) {
                 LogConsole.e(TAG, "读取透明度设置失败", e)
@@ -242,8 +253,10 @@ class FloatingService : Service() {
             try {
                 clickSettingsRepository.getClockPadding().collect { padding ->
                     cachedPadding = padding
-                    val paddingPx = (padding * resources.displayMetrics.density).toInt()
-                    floatingView?.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+                    withContext(Dispatchers.Main) {
+                        val paddingPx = (padding * resources.displayMetrics.density).toInt()
+                        floatingView?.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+                    }
                 }
             } catch (e: Exception) {
                 LogConsole.e(TAG, "读取间距设置失败", e)
@@ -253,7 +266,9 @@ class FloatingService : Service() {
             try {
                 clickSettingsRepository.getClockLetterSpacing().collect { spacing ->
                     cachedLetterSpacing = spacing
-                    timeTextView?.letterSpacing = spacing
+                    withContext(Dispatchers.Main) {
+                        timeTextView?.letterSpacing = spacing
+                    }
                 }
             } catch (e: Exception) {
                 LogConsole.e(TAG, "读取字间距设置失败", e)
